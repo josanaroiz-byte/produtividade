@@ -4,235 +4,139 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal de Produtividade Integrado</title>
-    <style>
-        /* CONFIGURAÇÕES DE CORES E ESTILO */
-        :root {
-            --azul-ceu: #87CEEB;
-            --azul-marinho: #00008B;
-            --branco-transparente: rgba(255, 255, 255, 0.7);
-            --shadow: 0 4px 15px rgba(0, 0, 139, 0.1);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--azul-ceu);
-            color: var(--azul-marinho);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-            flex: 1;
-            width: 100%;
-        }
-
-        /* HEADER E ÍCONE */
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .app-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 10px;
-            background-image: url('icone.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-        }
-
-        h1 {
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* NAVEGAÇÃO */
-        nav {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .tab-btn {
-            background: var(--branco-transparente);
-            border: 2px solid var(--azul-marinho);
-            color: var(--azul-marinho);
-            padding: 10px 20px;
-            cursor: pointer;
-            font-weight: bold;
-            border-radius: 25px;
-            transition: 0.3s;
-        }
-
-        .tab-btn.active, .tab-btn:hover {
-            background: var(--azul-marinho);
-            color: white;
-        }
-
-        /* PAINÉIS */
-        .panel {
-            display: none;
-            background: var(--branco-transparente);
-            padding: 25px;
-            border-radius: 20px;
-            box-shadow: var(--shadow);
-            backdrop-filter: blur(5px);
-            animation: fadeIn 0.4s ease;
-        }
-
-        .panel.active { display: block; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        h2 { margin-bottom: 20px; border-bottom: 1px solid var(--azul-marinho); padding-bottom: 10px; }
-
-        /* INPUTS E BOTÕES */
-        input, textarea, select {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid var(--azul-marinho);
-            border-radius: 10px;
-            background: white;
-            color: var(--azul-marinho);
-            font-size: 1rem;
-        }
-
-        .btn-action {
-            background: var(--azul-marinho);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-            transition: opacity 0.3s;
-        }
-
-        .btn-action:hover { opacity: 0.9; }
-
-        /* 1. CASA: TODO LIST */
-        .todo-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px;
-            background: white;
-            margin-bottom: 8px;
-            border-radius: 10px;
-            border-left: 5px solid var(--azul-marinho);
-        }
-
-        .todo-item.done span { text-decoration: line-through; opacity: 0.5; }
-
-        /* 2. TRABALHO: EDITOR */
-        #noteEditor { height: 350px; resize: none; border: 2px solid var(--azul-marinho); }
-        .work-tools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .timer-display { font-family: monospace; font-size: 1.8rem; font-weight: bold; }
-
-        /* 3. FINANÇAS */
-        .finance-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .finance-content { display: none; }
-        .finance-content.active { display: block; }
-        .balance-box { font-size: 1.5rem; font-weight: bold; text-align: right; margin-top: 15px; }
-
-        /* RODAPÉ */
-        footer {
-            text-align: center;
-            padding: 25px;
-            font-size: 0.95rem;
-            font-weight: bold;
-            margin-top: auto;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
     <div class="container">
         <header>
             <div class="app-icon"></div>
             <h1>Portal de Produtividade</h1>
         </header>
 
-        <nav>
-            <button class="tab-btn active" onclick="switchTab('casa')">CASA</button>
-            <button class="tab-btn" onclick="switchTab('trabalho')">TRABALHO</button>
-            <button class="tab-btn" onclick="switchTab('financas')">FINANÇAS</button>
+        <nav role="tablist" aria-label="Navegação principal">
+            <button 
+                class="tab-btn active" 
+                data-tab="casa" 
+                role="tab" 
+                aria-selected="true" 
+                aria-controls="casa"
+                tabindex="0">
+                CASA
+            </button>
+            <button 
+                class="tab-btn" 
+                data-tab="trabalho" 
+                role="tab" 
+                aria-selected="false" 
+                aria-controls="trabalho"
+                tabindex="-1">
+                TRABALHO
+            </button>
+            <button 
+                class="tab-btn" 
+                data-tab="financas" 
+                role="tab" 
+                aria-selected="false" 
+                aria-controls="financas"
+                tabindex="-1">
+                FINANÇAS
+            </button>
         </nav>
 
         <!-- ABA CASA -->
-        <section id="casa" class="panel active">
+        <section id="casa" class="panel active" role="tabpanel" aria-labelledby="casa-tab">
             <h2>Minhas Tarefas</h2>
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="todoInput" placeholder="O que você precisa fazer hoje?">
-                <button class="btn-action" style="width: auto; padding: 0 20px;" onclick="addTodo()">Adicionar</button>
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="todoInput" 
+                    placeholder="O que você precisa fazer hoje?"
+                    aria-label="Nova tarefa">
+                <button class="btn-action btn-add" id="addTodoBtn">Adicionar</button>
             </div>
-            <div id="todoList"></div>
+            <div id="todoList" role="list"></div>
+            <div id="todoEmpty" class="empty-message" style="display: none;">
+                Nenhuma tarefa. Comece adicionando uma! ✨
+            </div>
         </section>
 
         <!-- ABA TRABALHO -->
-        <section id="trabalho" class="panel">
+        <section id="trabalho" class="panel" role="tabpanel" aria-labelledby="trabalho-tab">
             <div class="work-tools">
                 <h2>Notas de Trabalho</h2>
-                <div class="timer-display" id="timerDisplay">25:00</div>
+                <div class="timer-display" id="timerDisplay" aria-label="Timer">25:00</div>
             </div>
             <div class="work-tools">
-                <span id="wordCount">Palavras: 0</span>
-                <div style="display: flex; gap: 5px;">
-                    <button class="tab-btn" style="padding: 5px 15px;" id="timerBtn" onclick="toggleTimer()">Iniciar Timer</button>
-                    <button class="tab-btn" style="padding: 5px 15px; border-color: red; color: red;" onclick="resetTimer()">Reset</button>
+                <span id="wordCount" aria-live="polite">Palavras: 0</span>
+                <div class="button-group">
+                    <button class="tab-btn" id="timerBtn">Iniciar Timer</button>
+                    <button class="tab-btn btn-reset" id="resetBtn">Reset</button>
                 </div>
             </div>
-            <textarea id="noteEditor" placeholder="Escreva suas ideias..." oninput="handleNote()"></textarea>
+            <textarea 
+                id="noteEditor" 
+                placeholder="Escreva suas ideias..."
+                aria-label="Editor de notas"></textarea>
         </section>
 
         <!-- ABA FINANÇAS -->
-        <section id="financas" class="panel">
+        <section id="financas" class="panel" role="tabpanel" aria-labelledby="financas-tab">
             <h2>Gestão Financeira</h2>
-            <div class="finance-tabs">
-                <button class="tab-btn active" id="btnFluxo" onclick="switchFinance('fluxo')">Fluxo de Caixa</button>
-                <button class="tab-btn" id="btnCalc" onclick="switchFinance('calc')">Simulador Renda Fixa</button>
+            <div class="finance-tabs" role="tablist">
+                <button 
+                    class="tab-btn active" 
+                    data-finance-tab="fluxo" 
+                    role="tab" 
+                    aria-selected="true" 
+                    aria-controls="fluxo">
+                    Fluxo de Caixa
+                </button>
+                <button 
+                    class="tab-btn" 
+                    data-finance-tab="calc" 
+                    role="tab" 
+                    aria-selected="false" 
+                    aria-controls="calc">
+                    Simulador Renda Fixa
+                </button>
             </div>
 
             <!-- Fluxo de Caixa -->
-            <div id="fluxo" class="finance-content active">
-                <input type="text" id="finDesc" placeholder="Descrição (Ex: Salário, Mercado)">
-                <input type="number" id="finValue" placeholder="Valor (R$) - Use sinal de menos para gastos">
-                <button class="btn-action" onclick="addFinance()">Lançar Valor</button>
-                <div id="financeList"></div>
-                <div class="balance-box" id="balanceDisplay">Saldo: R$ 0,00</div>
+            <div id="fluxo" class="finance-content active" role="tabpanel">
+                <input 
+                    type="text" 
+                    id="finDesc" 
+                    placeholder="Descrição (Ex: Salário, Mercado)"
+                    aria-label="Descrição da transação">
+                <input 
+                    type="number" 
+                    id="finValue" 
+                    placeholder="Valor (R$) - Use sinal de menos para gastos"
+                    aria-label="Valor da transação">
+                <button class="btn-action" id="addFinanceBtn">Lançar Valor</button>
+                <div id="financeList" role="list"></div>
+                <div id="financeEmpty" class="empty-message" style="display: none;">
+                    Nenhuma transação registrada. Comece adicionando! 💰
+                </div>
+                <div class="balance-box" id="balanceDisplay" aria-live="polite">Saldo: R$ 0,00</div>
             </div>
 
             <!-- Calculadora -->
-            <div id="calc" class="finance-content">
-                <label>Investimento Inicial (R$)</label>
-                <input type="number" id="calcInit" value="1000">
-                <label>Aporte Mensal (R$)</label>
-                <input type="number" id="calcMonthly" value="100">
-                <label>Taxa de Juros (% ao ano)</label>
-                <input type="number" id="calcRate" value="12">
-                <label>Tempo (Meses)</label>
-                <input type="number" id="calcTime" value="12">
-                <button class="btn-action" onclick="calculateFixed()">Calcular Rendimento</button>
-                <div class="balance-box" id="calcResult" style="text-align: center;">---</div>
+            <div id="calc" class="finance-content" role="tabpanel">
+                <label for="calcInit">Investimento Inicial (R$)</label>
+                <input type="number" id="calcInit" value="1000" aria-label="Investimento inicial">
+                
+                <label for="calcMonthly">Aporte Mensal (R$)</label>
+                <input type="number" id="calcMonthly" value="100" aria-label="Aporte mensal">
+                
+                <label for="calcRate">Taxa de Juros (% ao ano)</label>
+                <input type="number" id="calcRate" value="12" aria-label="Taxa de juros anual">
+                
+                <label for="calcTime">Tempo (Meses)</label>
+                <input type="number" id="calcTime" value="12" aria-label="Tempo em meses">
+                
+                <button class="btn-action" id="calculateBtn">Calcular Rendimento</button>
+                <div class="balance-box" id="calcResult" aria-live="polite">---</div>
             </div>
         </section>
     </div>
@@ -241,126 +145,9 @@
         Elaborado por Josana Roiz · @josanaroiz
     </footer>
 
-    <script>
-        /* LÓGICA DE NAVEGAÇÃO */
-        function switchTab(tab) {
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('nav .tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tab).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
+    <!-- Notificação Toast -->
+    <div id="notification" class="notification" role="alert" aria-live="assertive"></div>
 
-        function switchFinance(sub) {
-            document.querySelectorAll('.finance-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.finance-tabs .tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(sub).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
-
-        /* 1. CASA - TODO LIST */
-        let todos = JSON.parse(localStorage.getItem('my_todos')) || [];
-        function addTodo() {
-            const input = document.getElementById('todoInput');
-            if (!input.value) return;
-            todos.push({ text: input.value, done: false });
-            input.value = '';
-            renderTodos();
-        }
-        function deleteTodo(i) { todos.splice(i, 1); renderTodos(); }
-        function toggleTodo(i) { todos[i].done = !todos[i].done; renderTodos(); }
-        function renderTodos() {
-            localStorage.setItem('my_todos', JSON.stringify(todos));
-            const list = document.getElementById('todoList');
-            list.innerHTML = todos.map((t, i) => `
-                <div class="todo-item ${t.done ? 'done' : ''}">
-                    <span onclick="toggleTodo(${i})" style="cursor:pointer">${t.text}</span>
-                    <button onclick="deleteTodo(${i})" style="background:none; border:none; color:red; cursor:pointer; font-weight:bold;">X</button>
-                </div>
-            `).join('');
-        }
-
-        /* 2. TRABALHO - NOTAS E TIMER */
-        const editor = document.getElementById('noteEditor');
-        editor.value = localStorage.getItem('my_notes') || '';
-        function handleNote() {
-            localStorage.setItem('my_notes', editor.value);
-            const count = editor.value.trim() === "" ? 0 : editor.value.trim().split(/\s+/).length;
-            document.getElementById('wordCount').innerText = `Palavras: ${count}`;
-        }
-
-        let timer;
-        let timeLeft = 1500;
-        let running = false;
-        function toggleTimer() {
-            const btn = document.getElementById('timerBtn');
-            if (running) {
-                clearInterval(timer);
-                btn.innerText = "Retomar";
-            } else {
-                timer = setInterval(() => {
-                    timeLeft--;
-                    const m = Math.floor(timeLeft / 60);
-                    const s = timeLeft % 60;
-                    document.getElementById('timerDisplay').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-                    if (timeLeft <= 0) { clearInterval(timer); alert("Timer Concluído!"); resetTimer(); }
-                }, 1000);
-                btn.innerText = "Pausar";
-            }
-            running = !running;
-        }
-        function resetTimer() {
-            clearInterval(timer);
-            running = false;
-            timeLeft = 1500;
-            document.getElementById('timerDisplay').innerText = "25:00";
-            document.getElementById('timerBtn').innerText = "Iniciar Timer";
-        }
-
-        /* 3. FINANÇAS */
-        let finances = JSON.parse(localStorage.getItem('my_finances')) || [];
-        function addFinance() {
-            const d = document.getElementById('finDesc');
-            const v = document.getElementById('finValue');
-            if (!d.value || !v.value) return;
-            finances.push({ desc: d.value, val: parseFloat(v.value) });
-            d.value = ''; v.value = '';
-            renderFinance();
-        }
-        function deleteFinance(i) { finances.splice(i, 1); renderFinance(); }
-        function renderFinance() {
-            localStorage.setItem('my_finances', JSON.stringify(finances));
-            const list = document.getElementById('financeList');
-            let total = 0;
-            list.innerHTML = finances.map((f, i) => {
-                total += f.val;
-                return `
-                <div class="todo-item">
-                    <span>${f.desc}</span>
-                    <span style="font-weight:bold; color:${f.val < 0 ? 'red' : 'green'}">R$ ${f.val.toFixed(2)}</span>
-                    <button onclick="deleteFinance(${i})" style="background:none; border:none; color:red; cursor:pointer;">X</button>
-                </div>`;
-            }).join('');
-            document.getElementById('balanceDisplay').innerText = `Saldo: R$ ${total.toFixed(2)}`;
-        }
-
-        function calculateFixed() {
-            const p = parseFloat(document.getElementById('calcInit').value);
-            const m = parseFloat(document.getElementById('calcMonthly').value);
-            const yRate = parseFloat(document.getElementById('calcRate').value) / 100;
-            const t = parseInt(document.getElementById('calcTime').value);
-            
-            const mRate = Math.pow(1 + yRate, 1/12) - 1;
-            let total = p;
-            for(let i=0; i<t; i++) {
-                total = total * (1 + mRate) + m;
-            }
-            document.getElementById('calcResult').innerText = `Total: R$ ${total.toFixed(2)}`;
-        }
-
-        // INICIALIZAÇÃO
-        renderTodos();
-        renderFinance();
-        handleNote();
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
