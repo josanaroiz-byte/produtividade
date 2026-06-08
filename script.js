@@ -268,9 +268,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ================= FINANCES ================= */
   let finances = JSON.parse(localStorage.getItem('prod_finances')) || [];
-  const finDesc = document.getElementById('incomeDesc');
-  const finAmount = document.getElementById('incomeAmount');
-  const addFinBtn = document.getElementById('addFinanceBtn');
+  const finDesc = document.getElementById('finDesc');        // matches HTML
+  const finAmount = document.getElementById('finValue');     // matches HTML
+  const addFinBtn = document.getElementById('addFinanceBtn'); 
   const finListEl = document.getElementById('financeList');
   const finEmpty = document.getElementById('financeEmpty');
   const balanceDisplay = document.getElementById('balanceDisplay');
@@ -286,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `<div class="finance-item" data-index="${i}" role="listitem">
           <div><strong>${escapeHtml(f.desc)}</strong></div>
           <div style="display:flex;gap:8px;align-items:center">
-            <div style="font-weight:700;color:${f.val < 0 ? '#dc2626':'#007a3d'}">R$ ${f.val.toFixed(2)}</div>
+            <div style="font-weight:700;color:${f.val < 0 ? '#dc2626' : '#007a3d'}">R$ ${f.val.toFixed(2)}</div>
             <button aria-label="Remover transação" data-action="delete-fin" data-index="${i}">✖</button>
           </div>
         </div>`;
@@ -322,6 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   renderFinances();
+
 
   /* Calculadora */
   const principalEl = document.getElementById('principal');
