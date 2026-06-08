@@ -1,8 +1,8 @@
-// script.js - arquivo completo: abas A11y + tarefas + notas + timer + finanças
+// script.js - corrigido
 
 /* ================= Helpers ================= */
 const uid = (prefix='id') => `${prefix}-${Math.random().toString(36).slice(2,9)}`;
-function ensureId(el, prefix='id'){ if(!el) el.id = uid(prefix); return el.id; }
+function ensureId(el, prefix='id'){ if(!el.id) el.id = uid(prefix); return el.id; }
 function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function notify(msg, timeout=1600){
   const n = document.getElementById('notification');
@@ -96,44 +96,48 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* -------- Finance internal tabs -------- */
+  // CORRIGIDO: usa data-finance-tab em vez de data-fin
   const financeTablist = document.querySelector('.finance-tabs');
   if(financeTablist){
-    const fBtns = Array.from(financeTablist.querySelectorAll('.finance-tab'));
+    const fBtns = Array.from(financeTablist.querySelectorAll('[data-finance-tab]'));
     fBtns.forEach(btn => {
       btn.setAttribute('role','tab');
       ensureId(btn, 'finance-tab');
-      const target = btn.getAttribute('aria-controls') || btn.dataset.fin;
+      const target = btn.getAttribute('aria-controls') || btn.dataset.financeTab;
       if(target) btn.setAttribute('aria-controls', target);
       btn.addEventListener('click', () => {
         fBtns.forEach(b => {
-          const active = b === btn;
-          b.classList.toggle('active', active);
-          b.setAttribute('aria-selected', active ? 'true' : 'false');
-          b.tabIndex = active ? 0 : -1;
-          const tgt = b.getAttribute('aria-controls') || b.dataset.fin;
+          const isActive = b === btn;
+          b.classList.toggle('active', isActive);
+          b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+          b.tabIndex = isActive ? 0 : -1;
+          const tgt = b.getAttribute('aria-controls') || b.dataset.financeTab;
           if(tgt){
             const panel = document.getElementById(tgt);
-            if(panel) panel.style.display = active ? 'block' : 'none';
-            if(active && panel) panel.setAttribute('aria-labelledby', b.id);
+            if(panel){
+              panel.style.display = isActive ? 'block' : 'none';
+              if(isActive) panel.setAttribute('aria-labelledby', b.id);
+            }
           }
         });
       });
     });
-    const activeF = financeTablist.querySelector('.finance-tab.active') || fBtns[0];
+    // Ativa o primeiro por padrão
+    const activeF = financeTablist.querySelector('[data-finance-tab].active') || fBtns[0];
     if(activeF) activeF.click();
-    addKeyboardNavigation('.finance-tabs .finance-tab');
+    addKeyboardNavigation('.finance-tabs [data-finance-tab]');
   }
 
-  /* -------- Observe lists for role=listitem -------- */
+  /* -------- Observe lists para role=listitem -------- */
   observeListItems('#todoList');
   observeListItems('#financeList');
 
   /* ================= TODOS (Casa) ================= */
   let todos = JSON.parse(localStorage.getItem('prod_todos')) || [];
-  const todoInput = document.getElementById('todoInput');
-  const addTodoBtn = document.getElementById('addTodoBtn');
-  const todoListEl = document.getElementById('todoList');
-  const todoEmpty = document.getElementById('todoEmpty');
+  const todoInput   = document.getElementById('todoInput');
+  const addTodoBtn  = document.getElementById('addTodoBtn');
+  const todoListEl  = document.getElementById('todoList');
+  const todoEmpty   = document.getElementById('todoEmpty');
 
   function renderTodos(){
     if(!todoListEl) return;
@@ -165,15 +169,12 @@ document.addEventListener('DOMContentLoaded', () => {
     notify('Tarefa adicionada');
   }
 
-  function toggleTodo(idx){
-    if(todos[idx]) todos[idx].done = !todos[idx].done;
-    renderTodos();
-  }
-  function deleteTodo(idx){
-    todos.splice(idx,1); renderTodos();
-  }
+  function toggleTodo(idx){ if(todos[idx]) todos[idx].done = !todos[idx].done; renderTodos(); }
+  function deleteTodo(idx){ todos.splice(idx,1); renderTodos(); }
 
   if(addTodoBtn) addTodoBtn.addEventListener('click', addTodo);
+  if(todoInput)  todoInput.addEventListener('keydown', e => { if(e.key==='Enter') addTodo(); });
+
   if(todoListEl){
     todoListEl.addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-action]');
@@ -185,22 +186,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     todoListEl.addEventListener('keydown', (e) => {
       if(e.target.matches('.text') && (e.key === 'Enter' || e.key === ' ')){
-        const idx = parseInt(e.target.dataset.index,10);
-        toggleTodo(idx);
+        toggleTodo(parseInt(e.target.dataset.index,10));
       }
     });
   }
   renderTodos();
 
   /* ================= NOTES (Trabalho) ================= */
-  const noteEditor = document.getElementById('noteEditor');
+  const noteEditor  = document.getElementById('noteEditor');
   const wordCountEl = document.getElementById('wordCount');
   if(noteEditor) noteEditor.value = localStorage.getItem('prod_note') || '';
+
   function updateWordCount(){
     if(!noteEditor || !wordCountEl) return;
     const v = noteEditor.value.trim();
-    const count = v ? v.split(/\s+/).filter(Boolean).length : 0;
-    wordCountEl.textContent = `Palavras: ${count}`;
+    wordCountEl.textContent = `Palavras: ${v ? v.split(/\s+/).filter(Boolean).length : 0}`;
   }
   if(noteEditor){
     noteEditor.addEventListener('input', () => {
@@ -209,70 +209,67 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   updateWordCount();
-  window.saveNote = function(){ if(noteEditor) localStorage.setItem('prod_note', noteEditor.value || ''); notify('Nota salva'); };
+
+  window.saveNote  = function(){ if(noteEditor) localStorage.setItem('prod_note', noteEditor.value||''); notify('Nota salva'); };
   window.clearNote = function(){ if(confirm('Limpar notas?')){ if(noteEditor) noteEditor.value=''; localStorage.removeItem('prod_note'); updateWordCount(); notify('Editor limpo'); } };
 
   /* ================= TIMER (Trabalho) ================= */
+  // CORRIGIDO: usa os IDs corretos do HTML (timerBtn e resetBtn)
   let timerInterval = null;
-  let timerSeconds = 25 * 60;
-  const timerDisplay = document.getElementById('timerDisplay');
-  const startBtn = document.getElementById('startBtn');
-  const pauseBtn = document.getElementById('pauseBtn');
-  const timerPreset = document.getElementById('timerPreset');
+  let timerRunning  = false;
+  let timerSeconds  = 25 * 60;
 
-  function formatTimer(s){ const m = Math.floor(s/60); const sec = s%60; return `${m}:${sec<10? '0':''}${sec}`; }
+  const timerDisplay = document.getElementById('timerDisplay');
+  const timerBtn     = document.getElementById('timerBtn');   // "Iniciar Timer" no HTML
+  const resetBtn     = document.getElementById('resetBtn');   // "Reset" no HTML
+
+  function formatTimer(s){ const m = Math.floor(s/60); const sec = s%60; return `${m}:${sec<10?'0':''}${sec}`; }
   function updateTimerUI(){ if(timerDisplay) timerDisplay.textContent = formatTimer(timerSeconds); }
 
-  window.startTimer = function(){
-    if(timerInterval) return;
-    if(startBtn) startBtn.disabled = true;
-    if(pauseBtn) pauseBtn.disabled = false;
+  function startTimer(){
+    if(timerRunning) return;
+    timerRunning = true;
+    if(timerBtn) timerBtn.textContent = 'Pausar Timer';
     timerInterval = setInterval(() => {
       timerSeconds--;
       updateTimerUI();
       if(timerSeconds <= 0){
         clearInterval(timerInterval);
         timerInterval = null;
-        notify('⏰ Tempo esgotado');
-        if(startBtn) startBtn.disabled = false;
-        if(pauseBtn) pauseBtn.disabled = true;
+        timerRunning  = false;
+        if(timerBtn) timerBtn.textContent = 'Iniciar Timer';
+        notify('⏰ Tempo esgotado!');
       }
     }, 1000);
-  };
-
-  window.pauseTimer = function(){
-    if(timerInterval){ clearInterval(timerInterval); timerInterval = null; if(startBtn) startBtn.disabled = false; if(pauseBtn) pauseBtn.disabled = true; }
-  };
-
-  window.resetTimer = function(){
-    window.pauseTimer();
-    timerSeconds = parseInt((timerPreset && timerPreset.value) || 25) * 60;
-    updateTimerUI();
-  };
-
-  window.setPreset = function(){
-    timerSeconds = parseInt((timerPreset && timerPreset.value) || 25) * 60;
-    updateTimerUI();
-  };
-
-  if(!timerPreset){
-    // create a basic preset select if missing
-    const sel = document.createElement('select');
-    sel.id = 'timerPreset';
-    sel.innerHTML = '<option value="25">25</option><option value="15">15</option><option value="45">45</option><option value="5">5</option>';
-    sel.addEventListener('change', window.setPreset);
-    const tb = document.querySelector('.timer-box');
-    if(tb) tb.appendChild(sel);
   }
+
+  function pauseTimer(){
+    clearInterval(timerInterval);
+    timerInterval = null;
+    timerRunning  = false;
+    if(timerBtn) timerBtn.textContent = 'Iniciar Timer';
+  }
+
+  function resetTimer(){
+    pauseTimer();
+    timerSeconds = 25 * 60;
+    updateTimerUI();
+  }
+
+  if(timerBtn) timerBtn.addEventListener('click', () => { timerRunning ? pauseTimer() : startTimer(); });
+  if(resetBtn) resetBtn.addEventListener('click', resetTimer);
+
   updateTimerUI();
 
   /* ================= FINANCES ================= */
+  // CORRIGIDO: todos os IDs agora batem com o HTML
   let finances = JSON.parse(localStorage.getItem('prod_finances')) || [];
-  const finDesc = document.getElementById('finDesc');        // matches HTML
-  const finAmount = document.getElementById('finValue');     // matches HTML
-  const addFinBtn = document.getElementById('addFinanceBtn'); 
-  const finListEl = document.getElementById('financeList');
-  const finEmpty = document.getElementById('financeEmpty');
+
+  const finDesc        = document.getElementById('finDesc');
+  const finAmount      = document.getElementById('finValue');      // id correto do HTML
+  const addFinBtn      = document.getElementById('addFinanceBtn');
+  const finListEl      = document.getElementById('financeList');
+  const finEmpty       = document.getElementById('financeEmpty');
   const balanceDisplay = document.getElementById('balanceDisplay');
 
   function renderFinances(){
@@ -282,78 +279,69 @@ document.addEventListener('DOMContentLoaded', () => {
       if(finEmpty) finEmpty.style.display = '';
     } else {
       if(finEmpty) finEmpty.style.display = 'none';
-      finListEl.innerHTML = finances.map((f,i) => {
-        return `<div class="finance-item" data-index="${i}" role="listitem">
+      finListEl.innerHTML = finances.map((f,i) => `
+        <div class="finance-item" data-index="${i}" role="listitem">
           <div><strong>${escapeHtml(f.desc)}</strong></div>
           <div style="display:flex;gap:8px;align-items:center">
             <div style="font-weight:700;color:${f.val < 0 ? '#dc2626' : '#007a3d'}">R$ ${f.val.toFixed(2)}</div>
             <button aria-label="Remover transação" data-action="delete-fin" data-index="${i}">✖</button>
           </div>
-        </div>`;
-      }).join('');
+        </div>`).join('');
     }
-    const total = finances.reduce((s,x)=>s + (x.val || 0), 0);
+    const total = finances.reduce((s,x)=>s+(x.val||0), 0);
     if(balanceDisplay) balanceDisplay.textContent = `Saldo: R$ ${total.toFixed(2)}`;
     localStorage.setItem('prod_finances', JSON.stringify(finances));
   }
 
   function addFinance(){
-    const d = finDesc && finDesc.value.trim();
+    const d = finDesc   && finDesc.value.trim();
     const v = finAmount && parseFloat(finAmount.value);
-    if(!d || isNaN(v)){ alert('Preencha descrição e valor válidos'); return; }
+    if(!d || isNaN(v)){ notify('Preencha descrição e valor válidos'); return; }
     finances.push({ desc: d, val: v });
-    if(finDesc) finDesc.value = '';
+    if(finDesc)   finDesc.value   = '';
     if(finAmount) finAmount.value = '';
     renderFinances();
     notify('Transação adicionada');
   }
 
-  function deleteFinance(idx){
-    finances.splice(idx,1); renderFinances();
-  }
+  function deleteFinance(idx){ finances.splice(idx,1); renderFinances(); }
 
   if(addFinBtn) addFinBtn.addEventListener('click', addFinance);
+  if(finDesc)   finDesc.addEventListener('keydown',   e => { if(e.key==='Enter') finAmount && finAmount.focus(); });
+  if(finAmount) finAmount.addEventListener('keydown', e => { if(e.key==='Enter') addFinance(); });
+
   if(finListEl){
     finListEl.addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-action="delete-fin"]');
       if(!btn) return;
-      const idx = parseInt(btn.dataset.index,10);
-      deleteFinance(idx);
+      deleteFinance(parseInt(btn.dataset.index,10));
     });
   }
   renderFinances();
 
-
-  /* Calculadora */
-  const principalEl = document.getElementById('principal');
-  const monthlyEl = document.getElementById('monthly');
-  const annualRateEl = document.getElementById('annualRate');
-  const yearsEl = document.getElementById('years');
-  const calcBtn = document.getElementById('calculateBtn');
-  const calcResult = document.getElementById('calcResult');
+  /* ================= CALCULADORA (Simulador Renda Fixa) ================= */
+  // CORRIGIDO: IDs agora batem com o HTML (calcInit, calcMonthly, calcRate, calcTime)
+  const principalEl  = document.getElementById('calcInit');     // era 'principal'
+  const monthlyEl    = document.getElementById('calcMonthly');  // era 'monthly'
+  const annualRateEl = document.getElementById('calcRate');     // era 'annualRate'
+  const yearsEl      = document.getElementById('calcTime');     // era 'years' (agora em meses)
+  const calcBtn      = document.getElementById('calculateBtn');
+  const calcResult   = document.getElementById('calcResult');
 
   function simulate(){
-    const P = parseFloat(principalEl && principalEl.value) || 0;
-    const M = parseFloat(monthlyEl && monthlyEl.value) || 0;
-    const annual = (parseFloat(annualRateEl && annualRateEl.value) || 0) / 100;
-    const yrs = parseFloat(yearsEl && yearsEl.value) || 0;
-    const months = Math.round(yrs * 12);
-    const r = Math.pow(1 + annual, 1/12) - 1;
-    let balance = P;
-    for(let i=0;i<months;i++){ balance = balance * (1 + r) + M; }
+    const P       = parseFloat(principalEl  && principalEl.value)  || 0;
+    const M       = parseFloat(monthlyEl    && monthlyEl.value)    || 0;
+    const annual  = (parseFloat(annualRateEl && annualRateEl.value) || 0) / 100;
+    const months  = Math.round(parseFloat(yearsEl && yearsEl.value) || 0); // agora direto em meses
+    const r       = Math.pow(1 + annual, 1/12) - 1;
+    let balance   = P;
+    for(let i=0; i<months; i++){ balance = balance * (1 + r) + M; }
     if(calcResult) calcResult.textContent = `Valor final em ${months} meses: R$ ${balance.toFixed(2)}`;
   }
+
   if(calcBtn) calcBtn.addEventListener('click', simulate);
 
-  /* helpers for Enter key on finance inputs */
-  if(finDesc) finDesc.addEventListener('keydown', e => { if(e.key === 'Enter') (finAmount || {}).focus && finAmount.focus(); });
-  if(finAmount) finAmount.addEventListener('keydown', e => { if(e.key === 'Enter') addFinance(); });
-
-  /* observe lists so listitems get role set */
-  observeListItems('#todoList');
-  observeListItems('#financeList');
-
-  /* init notification element style (if exists) */
+  /* Notificação */
   const notif = document.getElementById('notification');
   if(notif){ notif.style.transition = 'opacity .25s'; notif.style.opacity = '0'; }
 
