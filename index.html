@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplicativo de Produtividade</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #87CEEB; /* Fundo azul céu claro */
+            color: #00008B; /* Letras em azul marinho */
+        }
+
+        .app-icon {
+            display: block;
+            margin: 20px auto;
+            width: 100px;
+            height: 100px;
+            background-image: url('icone.png'); /* Substitua pelo nome do seu arquivo PNG */
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1, h2, h3, p {
+            color: #00008B; /* Letras em azul marinho */
+        }
+
+        /* Estilos adicionais para as funcionalidades */
+        #todoList, #incomeList, #expenseList {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #todoList li, #incomeList li, #expenseList li {
+            margin-bottom: 10px;
+        }
+
+        .finance-tabs {
+            margin-bottom: 20px;
+        }
+
+        .finance-tab {
+            padding: 8px 16px;
+            background-color: #f1f1f1;
+            border: none;
+            cursor: pointer;
+        }
+
+        .finance-tab.active {
+            background-color: #00008B;
+            color: white;
+        }
+
+        .finance-content {
+            display: none;
+        }
+
+        .finance-content.active {
+            display: block;
+        }
+
+        #progressBar {
+            width: 100%;
+            height: 20px;
+            background-color: #f1f1f1;
+            position: relative;
+            cursor: pointer;
+        }
+
+        #progressFill {
+            height: 100%;
+            background-color: #00008B;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-icon"></div>
+    <div class="container">
+        <h1>Aplicativo de Produtividade</h1>
+        <p>Organize suas tarefas, gerencie suas finanças e muito mais!</p>
+
+        <!-- Tarefas -->
+        <h2>Tarefas</h2>
+        <input type="text" id="todoInput" placeholder="Nova tarefa">
+        <button onclick="addTodo()">Adicionar</button>
+        <ul id="todoList"></ul>
+
+        <!-- Notas -->
+        <h2>Notas</h2>
+        <textarea id="noteEditor"></textarea>
+        <button onclick="saveNote()">Salvar Nota</button>
+        <button onclick="clearEditor()">Limpar Editor</button>
+
+        <!-- Timer -->
+        <h2>Timer</h2>
+        <div id="timerDisplay">25:00</div>
+        <select id="timerPreset">
+            <option value="25">25 minutos</option>
+            <option value="30">30 minutos</option>
+            <option value="45">45 minutos</option>
+            <option value="60">60 minutos</option>
+        </select>
+        <button id="startBtn" onclick="startTimer()">Iniciar</button>
+        <button id="pauseBtn" onclick="pauseTimer()" disabled>Pausar</button>
+        <button onclick="resetTimer()">Reiniciar</button>
+
+         <!-- Finanças -->
+        <h2>Finanças</h2>
+        <div class="finance-tabs">
+            <button class="finance-tab active" onclick="showFinanceTab(0)">Entradas</button>
+            <button class="finance-tab" onclick="showFinanceTab(1)">Saídas</button>
+            <button class="finance-tab" onclick="showFinanceTab(2)">Saldo</button>
+        </div>
+
+        <div class="finance-content active">
+            <h3>Entradas</h3>
+            <input type="text" id="incomeInput" placeholder="Descrição da entrada">
+            <input type="number" id="incomeAmount" placeholder="Valor da entrada">
+            <button onclick="addIncome()">Adicionar Entrada</button>
+            <ul id="incomeList"></ul>
+        </div>
+
+        <div class="finance-content">
+            <h3>Saídas</h3>
+            <input type="text" id="expenseInput" placeholder="Descrição da saída">
+            <input type="number" id="expenseAmount" placeholder="Valor da saída">
+            <button onclick="addExpense()">Adicionar Saída</button>
+            <ul id="expenseList"></ul>
+        </div>
+
+        <div class="finance-content">
+            <h3>Saldo</h3>
+            <div id="balanceDisplay">R$ 0,00</div>
+            <div id="progressBar" onclick="setProgress(event)">
+                <div id="progressFill"></div>
+            </div>
+        </div>
+
+        <!-- Música -->
+        <h2>Música</h2>
+        <input type="file" onchange="loadMusic(event)">
+        <audio id="audioPlayer"></audio>
+        <div id="musicControls">
+            <button id="prevBtn" onclick="prevTrack()">⏪</button>
+            <button id="playPauseBtn" onclick="togglePlayPause()">▶️</button>
+            <button id="nextBtn" onclick="nextTrack()">⏩</button>
+            <div id="progressBar" onclick="setProgress(event)">
+                <div id="progressFill"></div>
+            </div>
+            <input type="range" min="0" max="100" value="100" oninput="setVolume(this.value)">
+            <div id="songTitle">Nenhuma música carregada</div>
+            <div id="songArtist">Artista Desconhecido</div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
