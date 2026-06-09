@@ -4,7 +4,7 @@
 // ---------- Configuração (usa window.FIREBASE_CONFIG definido no index.html) ----------
 const FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
   apiKey: "COLE_AQUI_SUA_API_KEY",
-  authDomain: "COLE_AQUI.firebaseapp.com",
+  authDomain: "AIzaSyDveFc6TOnyikVtHV_ncbqdcd7lqXV8mik",
   databaseURL: "https://COLE_AQUI-default-rtdb.firebaseio.com",
   projectId: "COLE_AQUI",
   storageBucket: "COLE_AQUI.appspot.com",
