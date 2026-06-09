@@ -9,12 +9,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-title" content="Portal de Produtividade"/>
   <link rel="stylesheet" href="styles.css"/>
-  <!-- Neutraliza paint worklets indesejados (opcional) -->
-  <script>try{window.registerPaint = window.registerPaint || function(){};}catch(e){}</script>
-  <!-- Firebase libs compat -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -27,7 +21,6 @@
     <h1>Portal de Produtividade</h1>
     <p>Entre com sua conta Google para sincronizar seus dados em todos os dispositivos.</p>
     <button id="loginBtn" class="btn-google">
-      <!-- ícone Google -->
       <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
       Entrar com Google
     </button>
@@ -35,34 +28,255 @@
   </div>
 </div>
 
-<!-- ═══ APP PRINCIPAL (mantive estrutura original) ═══ -->
+<!-- ═══ APP PRINCIPAL ═══ -->
 <div id="screen-app" style="display:none">
-  <!-- (conteúdo do app - igual ao seu) -->
-  <!-- ... (mantive seu HTML conforme enviado) ... -->
-  <!-- Para evitar repetição aqui, mantenha o mesmo markup do seu app já fornecido -->
-</div>
 
-<footer>
-  <strong>Elaborado por Josana Roiz · @josanaroiz</strong>
-</footer>
+  <div class="container">
 
-<!-- Configuração Firebase (substitua os valores) -->
-<script>
-  window.FIREBASE_CONFIG = {
-    apiKey:            "COLE_AQUI_SUA_API_KEY",
-    authDomain:        "COLE_AQUI.firebaseapp.com",
-    databaseURL:       "https://COLE_AQUI-default-rtdb.firebaseio.com",
-    projectId:         "COLE_AQUI",
-    storageBucket:     "COLE_AQUI.appspot.com",
-    messagingSenderId: "COLE_AQUI",
-    appId:             "COLE_AQUI"
-  };
+    <header>
+      <div class="app-icon" aria-hidden="true"></div>
+      <div style="flex:1">
+        <h1>Portal de Produtividade</h1>
+        <p id="userInfo" style="font-size:12px;color:#666;margin-top:2px"></p>
+      </div>
+      <button id="logoutBtn" class="btn-logout">Sair</button>
+    </header>
 
-  window.GCAL_API_KEY   = "AIzaSyDveFc6TOnyikVtHV_ncbqdcd7lqXV8mik"; // opcional: substitua
-  window.GCAL_CLIENT_ID = "510073834567-ossj5sqfbetoj7glofqpmm4raqvduic2.apps.googleusercontent.com"; // opcional
-</script>
+    <nav role="tablist" aria-label="Navegação principal">
+      <button class="tab-btn active" data-tab="casa"      role="tab" aria-selected="true"  tabindex="0">🏠 Casa</button>
+      <button class="tab-btn"        data-tab="trabalho"  role="tab" aria-selected="false" tabindex="-1">💼 Trabalho</button>
+      <button class="tab-btn"        data-tab="financas"  role="tab" aria-selected="false" tabindex="-1">💰 Finanças</button>
+      <button class="tab-btn"        data-tab="agenda"    role="tab" aria-selected="false" tabindex="-1">📅 Agenda</button>
+      <button class="tab-btn"        data-tab="metas"     role="tab" aria-selected="false" tabindex="-1">🎯 Metas</button>
+      <button class="tab-btn"        data-tab="ideias"    role="tab" aria-selected="false" tabindex="-1">💡 Ideias</button>
+      <button class="tab-btn"        data-tab="historico" role="tab" aria-selected="false" tabindex="-1">📊 Histórico</button>
+    </nav>
 
-<!-- App script -->
+    <!-- ═══ ABA CASA ═══ -->
+    <section id="casa" class="panel active" role="tabpanel">
+      <h2>Minhas Tarefas</h2>
+      <div class="input-row">
+        <input type="text" id="todoInput" placeholder="Nova tarefa..." aria-label="Nova tarefa"/>
+        <button class="btn-add" id="addTodoBtn">+ Adicionar</button>
+      </div>
+      <div id="todoList" role="list"></div>
+      <p id="todoEmpty" class="empty-msg">Nenhuma tarefa. Comece adicionando uma! ✨</p>
+    </section>
+
+    <!-- ═══ ABA TRABALHO ═══ -->
+    <section id="trabalho" class="panel" role="tabpanel">
+      <h2>Notas de Trabalho</h2>
+      <div class="timer-card">
+        <div class="timer-display" id="timerDisplay">25:00</div>
+        <div class="timer-controls">
+          <select id="timerPreset" onchange="setTimerPreset()">
+            <option value="25">25 min — Pomodoro</option>
+            <option value="15">15 min — Foco curto</option>
+            <option value="45">45 min — Sessão longa</option>
+            <option value="5">5 min — Pausa</option>
+          </select>
+          <button class="btn-timer" id="timerBtn">▶ Iniciar</button>
+          <button class="btn-reset" id="resetBtn">↺ Reset</button>
+        </div>
+      </div>
+      <div class="input-row" style="margin-top:20px">
+        <input type="text" id="noteTitleInput" placeholder="Título da nota..." aria-label="Título da nota"/>
+        <button class="btn-add" id="addNoteBtn">+ Nova nota</button>
+      </div>
+      <div id="noteList" role="list"></div>
+      <p id="noteEmpty" class="empty-msg">Nenhuma nota ainda. Crie uma! 📝</p>
+    </section>
+
+    <!-- ═══ ABA FINANÇAS ═══ -->
+    <section id="financas" class="panel" role="tabpanel">
+      <h2>Gestão Financeira</h2>
+
+      <!-- Seletor de moeda -->
+      <div class="moeda-row">
+        <span style="font-size:14px;font-weight:500;color:#000">Moeda:</span>
+        <button class="btn-moeda active" id="btnReal" onclick="setMoeda('BRL')">🇧🇷 Real (R$)</button>
+        <button class="btn-moeda" id="btnDolar" onclick="setMoeda('USD')">🇺🇸 Dólar (US$)</button>
+      </div>
+
+      <div class="finance-tabs" role="tablist">
+        <button class="ftab active" data-fin="fluxo" role="tab" aria-selected="true">Fluxo de Caixa</button>
+        <button class="ftab" data-fin="categ"  role="tab" aria-selected="false">Categorias</button>
+        <button class="ftab" data-fin="meta"   role="tab" aria-selected="false">Meta de Economia</button>
+        <button class="ftab" data-fin="calc"   role="tab" aria-selected="false">Simulador</button>
+      </div>
+
+      <!-- Fluxo -->
+      <div id="fluxo" class="fin-panel active" role="tabpanel">
+        <div class="input-row">
+          <input type="text"   id="finDesc"  placeholder="Descrição..."/>
+          <input type="number" id="finValue" placeholder="Valor (- para gasto)" style="max-width:180px"/>
+          <button class="btn-add" id="addFinBtn">+ Lançar</button>
+        </div>
+        <div id="financeList" role="list"></div>
+        <p id="finEmpty" class="empty-msg">Nenhuma transação ainda. 💰</p>
+        <div class="balance-box" id="balanceDisplay">Saldo: 0,00</div>
+      </div>
+
+      <!-- Categorias -->
+      <div id="categ" class="fin-panel" role="tabpanel">
+        <div class="input-row">
+          <input type="text"   id="categDesc"  placeholder="Descrição..."/>
+          <input type="number" id="categValue" placeholder="Valor" style="max-width:120px"/>
+          <select id="categCat">
+            <option value="Alimentação">🍽 Alimentação</option>
+            <option value="Transporte">🚗 Transporte</option>
+            <option value="Saúde">💊 Saúde</option>
+            <option value="Lazer">🎭 Lazer</option>
+            <option value="Educação">📚 Educação</option>
+            <option value="Moradia">🏠 Moradia</option>
+            <option value="Outros">📦 Outros</option>
+          </select>
+          <button class="btn-add" id="addCategBtn">+ Adicionar</button>
+        </div>
+        <div id="categList" role="list"></div>
+        <p id="categEmpty" class="empty-msg">Nenhum gasto categorizado ainda.</p>
+        <canvas id="categChart" height="220" style="margin-top:16px;max-width:100%"></canvas>
+      </div>
+
+      <!-- Meta de economia -->
+      <div id="meta" class="fin-panel" role="tabpanel">
+        <div class="input-row">
+          <input type="text"   id="metaNome" placeholder="Nome da meta..."/>
+          <input type="number" id="metaAlvo" placeholder="Valor alvo" style="max-width:150px"/>
+          <button class="btn-add" id="addMetaFinBtn">+ Criar meta</button>
+        </div>
+        <div id="metaFinList"></div>
+        <p id="metaFinEmpty" class="empty-msg">Nenhuma meta criada ainda. 🏦</p>
+      </div>
+
+      <!-- Simulador -->
+      <div id="calc" class="fin-panel" role="tabpanel">
+        <h3 class="sub-title">📈 Simulador de Renda Fixa</h3>
+        <div class="calc-grid">
+          <label>Investimento inicial<input type="number" id="calcInit"    value="1000"/></label>
+          <label>Aporte mensal<input       type="number" id="calcMonthly"  value="100"/></label>
+          <label>Taxa de juros (% ao ano)<input type="number" id="calcRate" value="12"/></label>
+          <label>Tempo (meses)<input        type="number" id="calcTime"    value="12"/></label>
+        </div>
+        <button class="btn-add" id="calculateBtn" style="margin-top:12px;width:100%">Calcular Rendimento</button>
+        <div class="balance-box" id="calcResult">---</div>
+
+        <h3 class="sub-title" style="margin-top:24px">💱 Conversor de Moeda</h3>
+        <div class="calc-grid">
+          <label>Valor<input type="number" id="convValor" placeholder="0,00"/></label>
+          <label>De
+            <select id="convDe">
+              <option value="BRL">Real (R$)</option>
+              <option value="USD">Dólar (US$)</option>
+              <option value="EUR">Euro (€)</option>
+            </select>
+          </label>
+          <label>Para
+            <select id="convPara">
+              <option value="USD">Dólar (US$)</option>
+              <option value="BRL">Real (R$)</option>
+              <option value="EUR">Euro (€)</option>
+            </select>
+          </label>
+          <label>Cotação (1 unidade da moeda de origem = ? destino)<input type="number" id="convCotacao" placeholder="Ex: 5.10"/></label>
+        </div>
+        <button class="btn-add" id="convertBtn" style="margin-top:12px;width:100%">Converter</button>
+        <div class="balance-box" id="convResult">---</div>
+      </div>
+    </section>
+
+    <!-- ═══ ABA AGENDA ═══ -->
+    <section id="agenda" class="panel" role="tabpanel">
+      <h2>Agenda Semanal</h2>
+      <div class="input-row">
+        <select id="agendaDia">
+          <option>Segunda-feira</option><option>Terça-feira</option>
+          <option>Quarta-feira</option><option>Quinta-feira</option>
+          <option>Sexta-feira</option><option>Sábado</option><option>Domingo</option>
+        </select>
+        <input type="time"  id="agendaHora"   value="09:00"/>
+        <input type="text"  id="agendaEvento" placeholder="Evento..."/>
+        <button class="btn-add" id="addAgendaBtn">+ Adicionar</button>
+      </div>
+      <button class="btn-gcal" id="syncCalBtn">📅 Sincronizar com Google Calendar</button>
+      <div id="agendaView"></div>
+      <p id="agendaEmpty" class="empty-msg">Nenhum evento ainda. Organize sua semana! 📅</p>
+    </section>
+
+    <!-- ═══ ABA METAS & HÁBITOS ═══ -->
+    <section id="metas" class="panel" role="tabpanel">
+      <h2>Metas & Hábitos</h2>
+      <h3 class="sub-title">🎯 Metas</h3>
+      <div class="input-row">
+        <input type="text"   id="metaTexto"   placeholder="Nome da meta..."/>
+        <input type="number" id="metaTotal"   placeholder="Total" style="max-width:90px"/>
+        <input type="text"   id="metaUnidade" placeholder="unid." style="max-width:80px"/>
+        <button class="btn-add" id="addMetaBtn">+ Adicionar</button>
+      </div>
+      <div id="metaList" role="list"></div>
+      <p id="metaEmpty" class="empty-msg">Nenhuma meta ainda. Defina uma! 🚀</p>
+
+      <h3 class="sub-title" style="margin-top:28px">🌱 Hábitos Diários</h3>
+      <div class="input-row">
+        <input type="text" id="habitoInput" placeholder="Novo hábito..."/>
+        <button class="btn-add" id="addHabitoBtn">+ Adicionar</button>
+      </div>
+      <div id="habitoList" role="list"></div>
+      <p id="habitoEmpty" class="empty-msg">Nenhum hábito ainda. Comece hoje! 🌱</p>
+    </section>
+
+    <!-- ═══ ABA IDEIAS & DIÁRIO ═══ -->
+    <section id="ideias" class="panel" role="tabpanel">
+      <h2>Ideias & Diário</h2>
+      <h3 class="sub-title">💡 Bloco de Ideias</h3>
+      <div class="input-row">
+        <input type="text" id="ideiaInput" placeholder="Registre uma ideia rapidamente..."/>
+        <button class="btn-add" id="addIdeiaBtn">+ Registrar</button>
+      </div>
+      <div id="ideiaList" role="list"></div>
+      <p id="ideiaEmpty" class="empty-msg">Nenhuma ideia ainda. Inspire-se! 💡</p>
+
+      <h3 class="sub-title" style="margin-top:28px">📔 Diário Pessoal</h3>
+      <div class="diary-header">
+        <span id="diaryDate" class="diary-date"></span>
+        <button class="btn-add" id="addDiaryBtn">+ Nova entrada</button>
+      </div>
+      <div id="diaryList" role="list"></div>
+      <p id="diaryEmpty" class="empty-msg">Nenhuma entrada ainda. Escreva hoje! 📔</p>
+
+      <div id="diaryModal" class="modal-overlay" style="display:none">
+        <div class="modal-box">
+          <div class="modal-header">
+            <span class="modal-title">Nova entrada</span>
+            <button class="modal-close" onclick="closeDiaryModal()">✕</button>
+          </div>
+          <input type="text" id="diaryTitleInput" placeholder="Título..." style="margin-bottom:10px"/>
+          <textarea id="diaryTextInput" placeholder="Como foi seu dia? O que você sentiu, aprendeu, conquistou..." rows="8"></textarea>
+          <button class="btn-add" style="width:100%;margin-top:10px" onclick="saveDiaryEntry()">Salvar entrada</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ ABA HISTÓRICO ═══ -->
+    <section id="historico" class="panel" role="tabpanel">
+      <h2>Histórico de Produtividade</h2>
+      <div class="hist-grid" id="histGrid"></div>
+      <div class="hist-details" id="histDetails"></div>
+    </section>
+
+  </div><!-- .container -->
+
+  <footer>
+    <strong>Elaborado por Josana Roiz · @josanaroiz</strong>
+  </footer>
+
+</div><!-- #screen-app -->
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="/api/config"></script>
 <script src="script.js"></script>
 </body>
 </html>
