@@ -61,6 +61,77 @@
       </div>
       <div id="todoList" role="list"></div>
       <p id="todoEmpty" class="empty-msg">Nenhuma tarefa. Comece adicionando uma! ✨</p>
+
+      <!-- Prestadores -->
+      <h3 class="sub-title" style="margin-top:28px">👷 Prestadores de Serviço</h3>
+      <div class="input-row">
+        <button class="btn-add" id="addPrestadorBtn">+ Novo prestador</button>
+      </div>
+      <div id="prestadorList" role="list"></div>
+      <p id="prestadorEmpty" class="empty-msg">Nenhum prestador cadastrado ainda.</p>
+
+      <!-- Modal prestador -->
+      <div id="prestadorModal" class="modal-overlay" style="display:none">
+        <div class="modal-box">
+          <div class="modal-header">
+            <span class="modal-title" id="prestadorModalTitle">Novo prestador</span>
+            <button class="modal-close" onclick="closePrestadorModal()">✕</button>
+          </div>
+
+          <p style="font-size:12px;font-weight:700;color:#000;margin-bottom:8px">Dados pessoais</p>
+          <div class="input-row">
+            <input type="text" id="pNome"         placeholder="Nome completo"/>
+          </div>
+          <div class="input-row">
+            <select id="pEspecialidade">
+              <option value="Encanador">🔧 Encanador</option>
+              <option value="Eletricista">⚡ Eletricista</option>
+              <option value="Pintor">🖌 Pintor</option>
+              <option value="Diarista">🧹 Diarista</option>
+              <option value="Jardineiro">🌿 Jardineiro</option>
+              <option value="Marceneiro">🪚 Marceneiro</option>
+              <option value="Pedreiro">🧱 Pedreiro</option>
+              <option value="Outros">📦 Outros</option>
+            </select>
+          </div>
+          <div class="input-row">
+            <input type="text" id="pTelefone" placeholder="Telefone / WhatsApp"/>
+            <input type="text" id="pEmail"    placeholder="E-mail (opcional)"/>
+          </div>
+
+          <p style="font-size:12px;font-weight:700;color:#000;margin:10px 0 8px">Endereço</p>
+          <div class="input-row">
+            <input type="text" id="pEndereco" placeholder="Rua / Av. e número"/>
+          </div>
+          <div class="input-row">
+            <input type="text" id="pBairro" placeholder="Bairro"/>
+            <input type="text" id="pCidade" placeholder="Cidade"/>
+          </div>
+
+          <p style="font-size:12px;font-weight:700;color:#000;margin:10px 0 8px">Dados bancários / Pix</p>
+          <div class="input-row">
+            <select id="pPixTipo">
+              <option value="CPF">CPF</option>
+              <option value="CNPJ">CNPJ</option>
+              <option value="Telefone">Telefone</option>
+              <option value="E-mail">E-mail</option>
+              <option value="Chave aleatória">Chave aleatória</option>
+            </select>
+            <input type="text" id="pPixChave" placeholder="Chave Pix"/>
+          </div>
+          <div class="input-row">
+            <input type="text" id="pBanco"   placeholder="Banco"/>
+            <input type="text" id="pAgencia" placeholder="Agência"/>
+            <input type="text" id="pConta"   placeholder="Conta"/>
+          </div>
+
+          <p style="font-size:12px;font-weight:700;color:#000;margin:10px 0 8px">Observações</p>
+          <textarea id="pObs" placeholder="Anotações extras..." rows="3" style="margin-bottom:14px"></textarea>
+
+          <button class="btn-add" style="width:100%" onclick="salvarPrestador()">Salvar prestador</button>
+        </div>
+      </div>
+
     </section>
 
     <!-- ═══ ABA TRABALHO ═══ -->

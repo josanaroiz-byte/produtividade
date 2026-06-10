@@ -133,6 +133,7 @@ function initApp(){
   if(dd) dd.textContent = today();
 
   initTodos();
+  initPrestadores();
   initNotes();
   initTimer();
   initFinances();
@@ -145,6 +146,161 @@ function initApp(){
   initIdeias();
   initDiary();
   loadGoogleLibs();
+}
+
+/* ═══════════════════════════════════════
+   PRESTADORES
+═══════════════════════════════════════ */
+function initPrestadores(){
+  const addBtn = document.getElementById('addPrestadorBtn');
+  const list   = document.getElementById('prestadorList');
+  const empty  = document.getElementById('prestadorEmpty');
+
+  const espColor = { Encanador:'blue',Eletricista:'amber',Pintor:'coral',Diarista:'teal',Jardineiro:'green',Marceneiro:'amber',Pedreiro:'gray',Outros:'gray' };
+  const badgeStyle = {
+    blue:'background:#E6F1FB;color:#185FA5', amber:'background:#FAEEDA;color:#854F0B',
+    coral:'background:#FAECE7;color:#993C1D', teal:'background:#E1F5EE;color:#0F6E56',
+    green:'background:#EAF3DE;color:#3B6D11', gray:'background:#F1EFE8;color:#5F5E5A'
+  };
+
+  listen('prestadores', data => {
+    const prestadores = objToArr(data).reverse();
+    empty.style.display = prestadores.length?'none':'';
+    list.innerHTML = prestadores.map(p=>{
+      const ini = p.nome.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
+      const bc  = badgeStyle[espColor[p.especialidade]||'gray'];
+      return `<div class="item-card" style="cursor:pointer" onclick="detalhePrestador('${p._key}')">
+        <div style="width:38px;height:38px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:#0F6E56;flex-shrink:0">${ini}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:500;color:#000;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.nome)}</div>
+          <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
+            <span style="font-size:11px;padding:2px 8px;border-radius:20px;${bc}">${esc(p.especialidade)}</span>
+            ${p.pixChave?'<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:#EAF3DE;color:#3B6D11">Pix</span>':''}
+            ${p.banco?'<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:#E6F1FB;color:#185FA5">Banco</span>':''}
+          </div>
+        </div>
+        <span style="font-size:18px;color:#aaa">›</span>
+      </div>`;
+    }).join('');
+  });
+
+  addBtn.addEventListener('click', () => {
+    document.getElementById('prestadorModalTitle').textContent = 'Novo prestador';
+    limparFormPrestador();
+    window._editPrestadorKey = null;
+    document.getElementById('prestadorModal').style.display = 'flex';
+  });
+
+  window.closePrestadorModal = () => document.getElementById('prestadorModal').style.display = 'none';
+
+  window.detalhePrestador = k => {
+    ref(`prestadores/${k}`).once('value', snap => {
+      const p = snap.val();
+      if(!p) return;
+      const row = (label, val) => val ? `<div style="margin-bottom:10px"><div style="font-size:11px;color:#888;margin-bottom:2px">${label}</div><div style="font-size:14px;color:#000">${esc(val)}</div></div>` : '';
+      const ini = p.nome.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
+
+      document.getElementById('prestadorModal').style.display = 'flex';
+      document.getElementById('prestadorModalTitle').textContent = p.nome;
+      document.getElementById('prestadorModal').querySelector('.modal-box').innerHTML = `
+        <div class="modal-header">
+          <span class="modal-title">${esc(p.nome)}</span>
+          <button class="modal-close" onclick="closePrestadorModal()">✕</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <div style="width:46px;height:46px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:#0F6E56">${ini}</div>
+          <span style="font-size:12px;padding:3px 10px;border-radius:20px;background:#E1F5EE;color:#0F6E56">${esc(p.especialidade)}</span>
+        </div>
+        ${row('Telefone / WhatsApp', p.telefone)}
+        ${row('E-mail', p.email)}
+        ${row('Endereço', p.endereco)}
+        ${row('Bairro', p.bairro)}
+        ${row('Cidade', p.cidade)}
+        ${row('Observações', p.obs)}
+        ${(p.pixChave||p.banco)?`
+        <div style="background:#EAF3DE;border-radius:10px;padding:12px;margin-top:8px">
+          <div style="font-size:12px;font-weight:700;color:#3B6D11;margin-bottom:8px">Dados financeiros</div>
+          ${p.pixChave?`<div style="font-size:13px;color:#27500A;margin-bottom:4px"><strong>Pix (${esc(p.pixTipo||'')}):</strong> ${esc(p.pixChave)}</div>`:''}
+          ${p.banco?`<div style="font-size:13px;color:#27500A;margin-bottom:2px">Banco: ${esc(p.banco)}</div>`:''}
+          ${p.agencia?`<div style="font-size:13px;color:#27500A;margin-bottom:2px">Agência: ${esc(p.agencia)}</div>`:''}
+          ${p.conta?`<div style="font-size:13px;color:#27500A">Conta: ${esc(p.conta)}</div>`:''}
+        </div>`:''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px">
+          <button onclick="editarPrestador('${k}')" style="cursor:pointer">Editar</button>
+          <button class="btn-danger" onclick="deletarPrestador('${k}')">Excluir</button>
+        </div>`;
+    });
+  };
+
+  window.editarPrestador = k => {
+    ref(`prestadores/${k}`).once('value', snap => {
+      const p = snap.val();
+      if(!p) return;
+      window._editPrestadorKey = k;
+      document.getElementById('prestadorModal').style.display = 'none';
+      setTimeout(()=>{
+        limparFormPrestador();
+        document.getElementById('pNome').value         = p.nome||'';
+        document.getElementById('pEspecialidade').value= p.especialidade||'Outros';
+        document.getElementById('pTelefone').value     = p.telefone||'';
+        document.getElementById('pEmail').value        = p.email||'';
+        document.getElementById('pEndereco').value     = p.endereco||'';
+        document.getElementById('pBairro').value       = p.bairro||'';
+        document.getElementById('pCidade').value       = p.cidade||'';
+        document.getElementById('pPixTipo').value      = p.pixTipo||'CPF';
+        document.getElementById('pPixChave').value     = p.pixChave||'';
+        document.getElementById('pBanco').value        = p.banco||'';
+        document.getElementById('pAgencia').value      = p.agencia||'';
+        document.getElementById('pConta').value        = p.conta||'';
+        document.getElementById('pObs').value          = p.obs||'';
+        document.getElementById('prestadorModalTitle').textContent = 'Editar prestador';
+
+        const box = document.getElementById('prestadorModal').querySelector('.modal-box');
+        if(!box.querySelector('#pNome')) location.reload();
+        document.getElementById('prestadorModal').style.display = 'flex';
+      }, 100);
+    });
+  };
+
+  window.deletarPrestador = k => {
+    del(`prestadores/${k}`).then(()=>{ closePrestadorModal(); notify('Prestador removido'); });
+  };
+
+  window.salvarPrestador = () => {
+    const nome = document.getElementById('pNome').value.trim();
+    if(!nome){ notify('Digite o nome do prestador ⚠️'); return; }
+    const dados = {
+      nome,
+      especialidade: document.getElementById('pEspecialidade').value,
+      telefone:      document.getElementById('pTelefone').value.trim(),
+      email:         document.getElementById('pEmail').value.trim(),
+      endereco:      document.getElementById('pEndereco').value.trim(),
+      bairro:        document.getElementById('pBairro').value.trim(),
+      cidade:        document.getElementById('pCidade').value.trim(),
+      pixTipo:       document.getElementById('pPixTipo').value,
+      pixChave:      document.getElementById('pPixChave').value.trim(),
+      banco:         document.getElementById('pBanco').value.trim(),
+      agencia:       document.getElementById('pAgencia').value.trim(),
+      conta:         document.getElementById('pConta').value.trim(),
+      obs:           document.getElementById('pObs').value.trim(),
+    };
+    if(window._editPrestadorKey){
+      ref(`prestadores/${window._editPrestadorKey}`).update(dados);
+      notify('Prestador atualizado ✓');
+    } else {
+      push('prestadores', dados);
+      notify('Prestador salvo ✓');
+    }
+    closePrestadorModal();
+    window._editPrestadorKey = null;
+  };
+}
+
+function limparFormPrestador(){
+  ['pNome','pTelefone','pEmail','pEndereco','pBairro','pCidade','pPixChave','pBanco','pAgencia','pConta','pObs'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value='';
+  });
 }
 
 /* ═══════════════════════════════════════
