@@ -722,53 +722,102 @@ function initAgenda(){
 }
 
 async function sincronizarCalendar(){
-  if(!window._gapiReady||!window._gisReady){ notify('Aguarde o carregamento do Google...'); return; }
-  notify('Autenticando com Google...');
-  return new Promise(resolve=>{
-    window._tokenClient.callback = async resp => {
-      if(resp.error){ notify('Erro ao autenticar ⚠️'); resolve(); return; }
-      ref('agenda').once('value', async snap => {
-        const eventos = objToArr(snap.val()||{});
-        if(!eventos.length){ notify('Nenhum evento para sincronizar'); resolve(); return; }
-        let ok=0;
-        for(const e of eventos){
-          try{
-            // Calcula a próxima ocorrência do dia da semana
-            const diaIdx  = DIAS.indexOf(e.dia);
-            const hoje    = new Date();
-            const diaSem  = hoje.getDay()===0?6:hoje.getDay()-1; // 0=Seg
-            let diff      = diaIdx - diaSem;
-            if(diff <= 0) diff += 7;
-            const d       = new Date(hoje);
-            d.setDate(hoje.getDate() + diff);
-            const ds      = d.toISOString().slice(0,10);
-            const hh      = parseInt(e.hora.split(':')[0]);
-            const mm      = e.hora.split(':')[1];
-            const start   = `${ds}T${e.hora}:00`;
-            const end     = `${ds}T${String(hh+1).padStart(2,'0')}:${mm}:00`;
+  if(!window._gapiReady || !window._gisReady){
+    notify('Aguarde o carregamento do Google... tente novamente em alguns segundos.');
+    return;
+  }
 
-            // Define recorrência no Google Calendar
-            const recMap  = { diaria:'DAILY', semanal:'WEEKLY', mensal:'MONTHLY' };
-            const rrule   = recMap[e.recorrencia] ? [`RRULE:FREQ=${recMap[e.recorrencia]}`] : [];
+  return new Promise(resolve => {
+    window._tokenClient.callback = async resp => {
+      if(resp.error){
+        notify('Erro ao autenticar com o Google ⚠️');
+        resolve();
+        return;
+      }
+
+      try {
+        const snap    = await ref('agenda').once('value');
+        const eventos = objToArr(snap.val() || {});
+
+        if(!eventos.length){
+          notify('Nenhum evento para sincronizar.');
+          resolve();
+          return;
+        }
+
+        notify(`Sincronizando ${eventos.length} evento(s)...`);
+        let ok = 0, erros = 0;
+
+        for(const e of eventos){
+          try {
+            // Calcula a próxima data do dia da semana escolhido
+            const diasSemana = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+            const diaIdx     = diasSemana.indexOf(e.dia); // 0=Dom, 1=Seg...
+            const hoje       = new Date();
+            const hojeIdx    = hoje.getDay(); // 0=Dom
+            let diff         = diaIdx - hojeIdx;
+            if(diff <= 0) diff += 7;
+            const proxData   = new Date(hoje);
+            proxData.setDate(hoje.getDate() + diff);
+            const ds         = proxData.toISOString().slice(0, 10);
+
+            // Monta horários
+            const [hh, mm]   = e.hora.split(':').map(Number);
+            const hhFim      = String(hh + 1).padStart(2, '0');
+            const mmStr      = String(mm).padStart(2, '0');
+            const dtStart    = `${ds}T${String(hh).padStart(2,'0')}:${mmStr}:00`;
+            const dtEnd      = `${ds}T${hhFim}:${mmStr}:00`;
+
+            // Regra de recorrência
+            const rruleMap = {
+              diaria:    'RRULE:FREQ=DAILY',
+              semanal:   'RRULE:FREQ=WEEKLY',
+              quinzenal: 'RRULE:FREQ=WEEKLY;INTERVAL=2',
+              mensal:    'RRULE:FREQ=MONTHLY',
+            };
+            const recurrence = rruleMap[e.recorrencia] ? [rruleMap[e.recorrencia]] : [];
+
+            const recLabel = {
+              diaria:'Diária', semanal:'Semanal',
+              quinzenal:'Quinzenal', mensal:'Mensal', unica:'Única vez'
+            };
 
             await gapi.client.calendar.events.insert({
-              calendarId:'primary',
-              resource:{
-                summary:`📅 ${e.nome}`,
-                start:{ dateTime:start, timeZone:'America/Sao_Paulo' },
-                end:  { dateTime:end,   timeZone:'America/Sao_Paulo' },
-                recurrence: rrule
+              calendarId: 'primary',
+              resource: {
+                summary:     `📅 ${e.nome}`,
+                description: `Recorrência: ${recLabel[e.recorrencia] || 'Única vez'}\nAdicionado pelo Portal de Produtividade`,
+                start: { dateTime: dtStart, timeZone: 'America/Sao_Paulo' },
+                end:   { dateTime: dtEnd,   timeZone: 'America/Sao_Paulo' },
+                recurrence
               }
             });
             ok++;
-          }catch(err){ console.error(err); }
+          } catch(err){
+            console.error('Erro ao criar evento:', e.nome, err);
+            erros++;
+          }
         }
-        notify(`${ok} evento(s) enviados ao Google Calendar! 📅`);
-        resolve();
-      });
+
+        if(erros > 0){
+          notify(`${ok} evento(s) sincronizados, ${erros} com erro. Verifique o console.`);
+        } else {
+          notify(`✅ ${ok} evento(s) adicionados ao Google Calendar!`);
+        }
+      } catch(err){
+        console.error('Erro geral:', err);
+        notify('Erro ao sincronizar. Tente novamente. ⚠️');
+      }
+
+      resolve();
     };
-    if(gapi.client.getToken()===null) window._tokenClient.requestAccessToken({prompt:'consent'});
-    else window._tokenClient.requestAccessToken({prompt:''});
+
+    // Solicita token — se já tem token válido não pede login de novo
+    if(!gapi.client.getToken()){
+      window._tokenClient.requestAccessToken({ prompt: 'consent' });
+    } else {
+      window._tokenClient.requestAccessToken({ prompt: '' });
+    }
   });
 }
 
