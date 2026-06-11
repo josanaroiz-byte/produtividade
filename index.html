@@ -56,7 +56,7 @@
     <section id="casa" class="panel active" role="tabpanel">
       <h2>Minhas Tarefas</h2>
       <div class="input-row">
-        <input type="text" id="todoInput" placeholder="Nova tarefa..." aria-label="Nova tarefa"/>
+        <input type="text" id="todoInput" placeholder="Nova tarefa ou lista (ex: Mercado)..." aria-label="Nova tarefa"/>
         <button class="btn-add" id="addTodoBtn">+ Adicionar</button>
       </div>
       <div id="todoList" role="list"></div>
@@ -179,13 +179,39 @@
       <!-- Fluxo -->
       <div id="fluxo" class="fin-panel active" role="tabpanel">
         <div class="input-row">
+          <select id="finTipo">
+            <option value="entrada">📈 Entrada</option>
+            <option value="saida">📉 Saída</option>
+          </select>
           <input type="text"   id="finDesc"  placeholder="Descrição..."/>
-          <input type="number" id="finValue" placeholder="Valor (- para gasto)" style="max-width:180px"/>
+          <input type="number" id="finValue" placeholder="Valor" style="max-width:130px"/>
+          <input type="date"   id="finData"/>
+          <select id="finCategoria">
+            <option value="Alimentação">🍽 Alimentação</option>
+            <option value="Transporte">🚗 Transporte</option>
+            <option value="Saúde">💊 Saúde</option>
+            <option value="Lazer">🎭 Lazer</option>
+            <option value="Educação">📚 Educação</option>
+            <option value="Moradia">🏠 Moradia</option>
+            <option value="Salário">💼 Salário</option>
+            <option value="Investimento">📊 Investimento</option>
+            <option value="Outros">📦 Outros</option>
+          </select>
           <button class="btn-add" id="addFinBtn">+ Lançar</button>
+        </div>
+        <!-- Filtros -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="btn-filtro active" onclick="filtrarFluxo('todos')">Todos</button>
+          <button class="btn-filtro" onclick="filtrarFluxo('entrada')">📈 Entradas</button>
+          <button class="btn-filtro" onclick="filtrarFluxo('saida')">📉 Saídas</button>
         </div>
         <div id="financeList" role="list"></div>
         <p id="finEmpty" class="empty-msg">Nenhuma transação ainda. 💰</p>
-        <div class="balance-box" id="balanceDisplay">Saldo: 0,00</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px">
+          <div class="balance-box" id="balanceEntradas" style="background:#f0fff4;border-color:#b7eac8;font-size:13px">Entradas: 0,00</div>
+          <div class="balance-box" id="balanceSaidas"   style="background:#fff0f0;border-color:#ffd0cc;font-size:13px">Saídas: 0,00</div>
+          <div class="balance-box" id="balanceDisplay"  style="font-size:13px">Saldo: 0,00</div>
+        </div>
       </div>
 
       <!-- Categorias -->

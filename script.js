@@ -304,7 +304,7 @@ function limparFormPrestador(){
 }
 
 /* ═══════════════════════════════════════
-   TODOS
+   TODOS com sub-itens
 ═══════════════════════════════════════ */
 function initTodos(){
   const input  = document.getElementById('todoInput');
@@ -315,18 +315,57 @@ function initTodos(){
   listen('todos', data => {
     const todos = objToArr(data).reverse();
     empty.style.display = todos.length?'none':'';
-    list.innerHTML = todos.map(t=>`
-      <div class="item-card${t.done?' done':''}">
-        <div class="item-text">${esc(t.text)}<div class="item-meta">${fmtD(t.createdAt)}</div></div>
-        <div class="item-actions">
-          <button onclick="todoToggle('${t._key}',${!t.done})">${t.done?'↺':'✓'}</button>
-          <button class="btn-danger" onclick="todoDelete('${t._key}')">✕</button>
+    list.innerHTML = todos.map(t=>{
+      const subs = t.subs ? Object.entries(t.subs).map(([k,v])=>({_key:k,...v})) : [];
+      const totalSubs = subs.length;
+      const doneSubs  = subs.filter(s=>s.done).length;
+      return `<div class="item-card" style="flex-direction:column;align-items:stretch">
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="checkbox" ${t.done?'checked':''} style="width:16px;height:16px;cursor:pointer;flex-shrink:0;accent-color:#0d1f3c" onchange="todoToggle('${t._key}',${!t.done})">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:500;color:${t.done?'#aaa':'#000'};${t.done?'text-decoration:line-through':''}">${esc(t.text)}</div>
+            ${totalSubs?`<div style="font-size:11px;color:#888;margin-top:2px">${doneSubs}/${totalSubs} sub-itens</div>`:''}
+          </div>
+          <button onclick="toggleSubForm('${t._key}')" style="font-size:11px;padding:4px 8px;color:#1e4d8c;border-color:#c8def7;background:#f0f6ff">+ Sub-item</button>
+          <button class="btn-danger" onclick="todoDelete('${t._key}')" style="padding:4px 8px;font-size:12px">✕</button>
         </div>
-      </div>`).join('');
+        ${subs.length?`
+        <div style="margin-top:8px;padding-left:26px">
+          ${subs.map(s=>`
+            <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid #f0f0f0">
+              <input type="checkbox" ${s.done?'checked':''} style="width:14px;height:14px;cursor:pointer;accent-color:#0d1f3c" onchange="subToggle('${t._key}','${s._key}',${!s.done})">
+              <span style="flex:1;font-size:13px;color:${s.done?'#aaa':'#000'};${s.done?'text-decoration:line-through':''}">${esc(s.text)}</span>
+              <button class="btn-danger" onclick="subDelete('${t._key}','${s._key}')" style="padding:2px 7px;font-size:11px">✕</button>
+            </div>`).join('')}
+        </div>`:''}
+        <div id="subform-${t._key}" style="display:none;margin-top:8px;padding-left:26px">
+          <div class="input-row" style="margin-bottom:0">
+            <input type="text" id="subinput-${t._key}" placeholder="Novo sub-item..." style="font-size:13px"/>
+            <button class="btn-add" onclick="addSub('${t._key}')" style="font-size:12px;padding:7px 12px">Adicionar</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
   });
 
-  window.todoToggle = (k,v) => ref(`todos/${k}/done`).set(v);
-  window.todoDelete = k => del(`todos/${k}`).then(()=>notify('Tarefa removida'));
+  window.todoToggle  = (k,v)  => ref(`todos/${k}/done`).set(v);
+  window.todoDelete  = k      => del(`todos/${k}`).then(()=>notify('Tarefa removida'));
+  window.subToggle   = (tk,sk,v) => ref(`todos/${tk}/subs/${sk}/done`).set(v);
+  window.subDelete   = (tk,sk)   => del(`todos/${tk}/subs/${sk}`).then(()=>notify('Sub-item removido'));
+
+  window.toggleSubForm = k => {
+    const el = document.getElementById(`subform-${k}`);
+    if(el) el.style.display = el.style.display==='none'?'block':'none';
+  };
+
+  window.addSub = k => {
+    const input = document.getElementById(`subinput-${k}`);
+    const v = input.value.trim();
+    if(!v) return;
+    ref(`todos/${k}/subs`).push({text:v,done:false});
+    input.value='';
+    notify('Sub-item adicionado ✓');
+  };
 
   function add(){
     const v=input.value.trim(); if(!v) return;
@@ -489,16 +528,25 @@ function initCateg(){
   addBtn.addEventListener('click',add);
 }
 
-window.renderCategChart = function(categs){
-  if(!categs){ ref('categs').once('value', snap => renderCategChart(objToArr(snap.val()||{}))); return; }
+window.renderCategChart = function(lancamentos){
+  if(!lancamentos){
+    ref('finances').once('value', snap => renderCategChart(objToArr(snap.val()||{})));
+    return;
+  }
   const canvas = document.getElementById('categChart');
   if(!canvas) return;
+  // Usa apenas saídas agrupadas por categoria
+  const saidas = lancamentos.filter(f=>f.tipo==='saida'||f.val<0);
   const totals={};
-  categs.forEach(c=>{ totals[c.cat]=(totals[c.cat]||0)+parseFloat(c.val); });
+  saidas.forEach(c=>{
+    const cat = c.categoria || c.cat || 'Outros';
+    totals[cat]=(totals[cat]||0)+Math.abs(parseFloat(c.val));
+  });
   const labels=Object.keys(totals), data=Object.values(totals);
-  const colors=['#0d1f3c','#FF6B1A','#2a9d8f','#e9c46a','#e76f51','#264653','#a8dadc'];
+  const colors=['#0d1f3c','#FF6B1A','#2a9d8f','#e9c46a','#e76f51','#264653','#a8dadc','#457b9d'];
   if(categChartInst) categChartInst.destroy();
-  if(!labels.length) return;
+  if(!labels.length){ canvas.style.display='none'; return; }
+  canvas.style.display='block';
   categChartInst = new Chart(canvas,{
     type:'doughnut',
     data:{ labels, datasets:[{ data, backgroundColor:colors.slice(0,labels.length), borderWidth:2, borderColor:'#fff' }] },
@@ -640,21 +688,31 @@ async function sincronizarCalendar(){
         let ok=0;
         for(const e of eventos){
           try{
-            const diaIdx = DIAS.indexOf(e.dia);
-            const hoje = new Date();
-            const diff = (diaIdx - hoje.getDay() + 8) % 7 || 7;
-            const d = new Date(hoje); d.setDate(hoje.getDate()+diff);
-            const ds = d.toISOString().slice(0,10);
-            const hh = parseInt(e.hora.split(':')[0]);
-            const mm = e.hora.split(':')[1];
-            const start = `${ds}T${e.hora}:00`;
-            const end   = `${ds}T${String(hh+1).padStart(2,'0')}:${mm}:00`;
+            // Calcula a próxima ocorrência do dia da semana
+            const diaIdx  = DIAS.indexOf(e.dia);
+            const hoje    = new Date();
+            const diaSem  = hoje.getDay()===0?6:hoje.getDay()-1; // 0=Seg
+            let diff      = diaIdx - diaSem;
+            if(diff <= 0) diff += 7;
+            const d       = new Date(hoje);
+            d.setDate(hoje.getDate() + diff);
+            const ds      = d.toISOString().slice(0,10);
+            const hh      = parseInt(e.hora.split(':')[0]);
+            const mm      = e.hora.split(':')[1];
+            const start   = `${ds}T${e.hora}:00`;
+            const end     = `${ds}T${String(hh+1).padStart(2,'0')}:${mm}:00`;
+
+            // Define recorrência no Google Calendar
+            const recMap  = { diaria:'DAILY', semanal:'WEEKLY', mensal:'MONTHLY' };
+            const rrule   = recMap[e.recorrencia] ? [`RRULE:FREQ=${recMap[e.recorrencia]}`] : [];
+
             await gapi.client.calendar.events.insert({
               calendarId:'primary',
               resource:{
                 summary:`📅 ${e.nome}`,
                 start:{ dateTime:start, timeZone:'America/Sao_Paulo' },
-                end:  { dateTime:end,   timeZone:'America/Sao_Paulo' }
+                end:  { dateTime:end,   timeZone:'America/Sao_Paulo' },
+                recurrence: rrule
               }
             });
             ok++;
