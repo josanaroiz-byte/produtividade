@@ -132,6 +132,7 @@ function initApp(){
   const dd = document.getElementById('diaryDate');
   if(dd) dd.textContent = today();
 
+  initDiaCard();
   initTodos();
   initPrestadores();
   initNotes();
@@ -300,6 +301,50 @@ function limparFormPrestador(){
   ['pNome','pTelefone','pEmail','pEndereco','pBairro','pCidade','pPixChave','pBanco','pAgencia','pConta','pObs'].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.value='';
+  });
+}
+
+/* ═══════════════════════════════════════
+   CARD DO DIA
+═══════════════════════════════════════ */
+function initDiaCard(){
+  const saudacao = document.getElementById('diaSaudacao');
+  const dataHoje = document.getElementById('diaDataHoje');
+  if(!saudacao || !dataHoje) return;
+
+  const hora = new Date().getHours();
+  const nome = auth.currentUser?.displayName?.split(' ')[0] || '';
+  const s = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
+  saudacao.textContent = `${s}, ${nome}! 👋`;
+  dataHoje.textContent = today();
+
+  listen('todos', data => {
+    const todos = objToArr(data);
+    const pendentes = todos.filter(t=>!t.done);
+    const concluidas = todos.filter(t=>t.done).length;
+
+    document.getElementById('diaTotalPendentes').textContent = pendentes.length;
+
+    const container = document.getElementById('diaTarefasHoje');
+    if(!container) return;
+
+    if(!todos.length){
+      container.innerHTML = `<div class="dia-vazia">Nenhuma tarefa cadastrada ainda 🌟</div>`;
+      return;
+    }
+
+    // Mostra até 4 pendentes e resume o resto
+    const exibir = pendentes.slice(0,4);
+    const resto  = pendentes.length - exibir.length;
+
+    container.innerHTML = exibir.map(t=>`
+      <div class="dia-tarefa-item">
+        <input type="checkbox" style="width:14px;height:14px;cursor:pointer;accent-color:#FF6B1A" onchange="todoToggle('${t._key}',${!t.done})">
+        <span>${esc(t.text)}</span>
+        ${t.subs ? `<span style="font-size:10px;opacity:0.7;margin-left:auto">${Object.values(t.subs||{}).filter(s=>s.done).length}/${Object.keys(t.subs||{}).length} sub-itens</span>` : ''}
+      </div>`).join('') +
+      (resto > 0 ? `<div class="dia-vazia">+ ${resto} tarefa${resto>1?'s':''} pendente${resto>1?'s':''}</div>` : '') +
+      (concluidas > 0 ? `<div style="font-size:11px;color:rgba(255,255,255,0.5);text-align:right;margin-top:4px">✓ ${concluidas} concluída${concluidas>1?'s':''} hoje</div>` : '');
   });
 }
 

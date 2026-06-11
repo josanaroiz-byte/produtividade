@@ -54,7 +54,23 @@
 
     <!-- ═══ ABA CASA ═══ -->
     <section id="casa" class="panel active" role="tabpanel">
-      <h2>Minhas Tarefas</h2>
+
+      <!-- Resumo do dia -->
+      <div class="dia-card" id="diaCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div>
+            <div style="font-size:16px;font-weight:700;color:#fff" id="diaSaudacao">Bom dia! 👋</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.7)" id="diaDataHoje"></div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:28px;font-weight:700;color:#FF6B1A" id="diaTotalPendentes">0</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.7)">tarefas pendentes</div>
+          </div>
+        </div>
+        <div id="diaTarefasHoje"></div>
+      </div>
+
+      <h2 style="margin-top:20px">Minhas Tarefas</h2>
       <div class="input-row">
         <input type="text" id="todoInput" placeholder="Nova tarefa ou lista (ex: Mercado)..." aria-label="Nova tarefa"/>
         <button class="btn-add" id="addTodoBtn">+ Adicionar</button>
@@ -184,7 +200,7 @@
             <option value="saida">📉 Saída</option>
           </select>
           <input type="text"   id="finDesc"  placeholder="Descrição..."/>
-          <input type="number" id="finValue" placeholder="Valor" style="max-width:130px"/>
+          <input type="number" id="finValue" placeholder="Valor" style="max-width:110px"/>
           <input type="date"   id="finData"/>
           <select id="finCategoria">
             <option value="Alimentação">🍽 Alimentação</option>
@@ -197,6 +213,22 @@
             <option value="Investimento">📊 Investimento</option>
             <option value="Outros">📦 Outros</option>
           </select>
+        </div>
+        <!-- Parcelas -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer">
+            <input type="checkbox" id="finParcelado" style="width:15px;height:15px;accent-color:#0d1f3c" onchange="toggleParcelado()">
+            Parcelado / Recorrente
+          </label>
+          <div id="finParcelaOpts" style="display:none;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input type="number" id="finNumParcelas" placeholder="Nº de parcelas" style="max-width:130px;margin:0"/>
+            <select id="finRecorrencia" style="max-width:150px;margin:0">
+              <option value="mensal">🔁 Mensal</option>
+              <option value="semanal">📅 Semanal</option>
+              <option value="quinzenal">📆 Quinzenal</option>
+              <option value="anual">🗓 Anual</option>
+            </select>
+          </div>
           <button class="btn-add" id="addFinBtn">+ Lançar</button>
         </div>
         <!-- Filtros -->
@@ -204,6 +236,7 @@
           <button class="btn-filtro active" onclick="filtrarFluxo('todos')">Todos</button>
           <button class="btn-filtro" onclick="filtrarFluxo('entrada')">📈 Entradas</button>
           <button class="btn-filtro" onclick="filtrarFluxo('saida')">📉 Saídas</button>
+          <button class="btn-filtro" onclick="filtrarFluxo('parcelado')">🔁 Parcelados</button>
         </div>
         <div id="financeList" role="list"></div>
         <p id="finEmpty" class="empty-msg">Nenhuma transação ainda. 💰</p>
