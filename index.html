@@ -319,18 +319,20 @@
     <section id="agenda" class="panel" role="tabpanel">
       <h2>Agenda Semanal</h2>
       <div class="input-row">
+        <input type="date"  id="agendaData"   aria-label="Data do evento"/>
+        <input type="time"  id="agendaHora"   value="09:00"/>
+        <input type="text"  id="agendaEvento" placeholder="Evento..."/>
         <select id="agendaDia">
           <option>Segunda-feira</option><option>Terça-feira</option>
           <option>Quarta-feira</option><option>Quinta-feira</option>
           <option>Sexta-feira</option><option>Sábado</option><option>Domingo</option>
         </select>
-        <input type="time"  id="agendaHora"   value="09:00"/>
-        <input type="text"  id="agendaEvento" placeholder="Evento..."/>
         <select id="agendaRecorrencia">
-          <option value="semanal">🔁 Semanal</option>
-          <option value="diaria">📅 Diária</option>
-          <option value="mensal">🗓 Mensal</option>
           <option value="unica">1️⃣ Única vez</option>
+          <option value="diaria">📅 Diária</option>
+          <option value="semanal">🔁 Semanal</option>
+          <option value="quinzenal">📆 Quinzenal</option>
+          <option value="mensal">🗓 Mensal</option>
         </select>
         <button class="btn-add" id="addAgendaBtn">+ Adicionar</button>
       </div>
