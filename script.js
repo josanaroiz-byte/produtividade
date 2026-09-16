@@ -443,69 +443,16 @@ window.salvarDoc = () => {
 
 /* ── E-mails ── */
 // Gmail — usa a Google API que já temos
-window.carregarGmail = async () => {
-  if(!window._gapiReady||!window._gisReady){ notify('Aguarde o carregamento do Google...'); return; }
+window.carregarGmail = () => {
   document.querySelectorAll('.btn-email').forEach(b=>b.classList.remove('ativo'));
   document.getElementById('btnGmail').classList.add('ativo');
   document.getElementById('emailContaAtiva').textContent = '📧 Gmail';
-  document.getElementById('emailList').innerHTML = '<p class="empty-msg">Carregando...</p>';
-
-  try {
-    // Verifica se já tem token válido
-    const token = gapi.client.getToken();
-
-    if(!token){
-      // Usa redirect em vez de popup para evitar bloqueio COOP
-      window._tokenClient.requestAccessToken({ prompt: 'consent' });
-      return;
-    }
-
-    await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest');
-
-    const res = await gapi.client.gmail.users.messages.list({
-      userId:'me', maxResults:15, labelIds:['INBOX']
-    });
-    const msgs = res.result.messages || [];
-    if(!msgs.length){
-      document.getElementById('emailList').innerHTML='<p class="empty-msg">Nenhum e-mail encontrado.</p>';
-      return;
-    }
-
-    const detalhes = await Promise.all(msgs.slice(0,10).map(m =>
-      gapi.client.gmail.users.messages.get({
-        userId:'me', id:m.id, format:'metadata',
-        metadataHeaders:['From','Subject','Date']
-      })
-    ));
-
-    document.getElementById('emailList').innerHTML = detalhes.map(r=>{
-      const h       = r.result.payload.headers;
-      const de      = h.find(x=>x.name==='From')?.value    || 'Desconhecido';
-      const assunto = h.find(x=>x.name==='Subject')?.value || '(sem assunto)';
-      const data    = h.find(x=>x.name==='Date')?.value    || '';
-      const naoLido = r.result.labelIds?.includes('UNREAD');
-      const ini     = de.charAt(0).toUpperCase();
-      const dtFmt   = data ? new Date(data).toLocaleDateString('pt-BR') : '';
-      return `<div class="email-item ${naoLido?'email-nao-lido':''}">
-        ${naoLido?'<div class="email-nao-lido-dot"></div>':'<div style="width:8px"></div>'}
-        <div class="email-avatar">${ini}</div>
-        <div style="flex:1;min-width:0">
-          <div class="email-remetente">${esc(de.split('<')[0].trim())}</div>
-          <div class="email-assunto">${esc(assunto)}</div>
-        </div>
-        <div class="email-data">${dtFmt}</div>
-      </div>`;
-    }).join('');
-
-  } catch(e){
-    console.error(e);
-    // Se der erro de autenticação, pede token novamente
-    if(e.status === 401 || e.status === 403){
-      window._tokenClient.requestAccessToken({ prompt: '' });
-    } else {
-      notify('Erro ao carregar e-mails. Tente novamente ⚠️');
-    }
-  }
+  document.getElementById('emailList').innerHTML = `
+    <div style="text-align:center;padding:20px">
+      <p style="font-size:14px;color:var(--color-text-secondary);margin-bottom:12px">Clique para abrir o Gmail em uma nova aba.</p>
+      <button class="btn-add" onclick="window.open('https://mail.google.com','_blank')" style="margin-bottom:10px">📧 Abrir Gmail →</button>
+      <p style="font-size:12px;color:var(--color-text-tertiary)">Para compor um e-mail diretamente, use o botão ✏️ Novo e-mail acima.</p>
+    </div>`;
 };
 
 // Enviar e-mail via Gmail API
@@ -556,7 +503,7 @@ window.abrirMailMac = () => {
   document.getElementById('emailList').innerHTML = `
     <div style="text-align:center;padding:20px">
       <p style="font-size:14px;color:var(--color-text-secondary);margin-bottom:12px">Clique para abrir o app Mail do Mac com todas as suas contas.</p>
-      <button class="btn-add" onclick="window.location.href='message://'">✉️ Abrir Mail →</button>
+      <button class="btn-add" onclick="window.open('mailto:','_blank')">✉️ Abrir Mail →</button>
     </div>`;
 };
 
