@@ -135,6 +135,7 @@ function initApp(){
   initDiaCard();
   initTodos();
   initPrestadores();
+  initMesa();
   initNotes();
   initTimer();
   initFinances();
@@ -303,6 +304,247 @@ function limparFormPrestador(){
     if(el) el.value='';
   });
 }
+
+/* ═══════════════════════════════════════
+   MESA DE TRABALHO
+═══════════════════════════════════════ */
+function initMesa(){
+  initNotasRapidas();
+  initDocs();
+  initRascunho();
+  initCalcMesa();
+  initMesaTodos();
+}
+
+/* ── Afazeres do dia (sincronizado com Casa) ── */
+function initMesaTodos(){
+  listen('todos', data => {
+    const todos   = objToArr(data).filter(t=>!t.done);
+    const list    = document.getElementById('mesaTodoList');
+    const empty   = document.getElementById('mesaTodoEmpty');
+    if(!list) return;
+    empty.style.display = todos.length?'none':'';
+    list.innerHTML = todos.slice(0,8).map(t=>`
+      <div class="nota-rapida-item">
+        <input type="checkbox" style="width:14px;height:14px;cursor:pointer;accent-color:#0d1f3c" onchange="todoToggle('${t._key}',true)">
+        <span style="flex:1;font-size:13px">${esc(t.text)}</span>
+        ${t.subs?`<span style="font-size:10px;color:var(--color-text-tertiary)">${Object.values(t.subs||{}).filter(s=>s.done).length}/${Object.keys(t.subs||{}).length}</span>`:''}
+      </div>`).join('');
+  });
+}
+
+/* ── Notas rápidas ── */
+function initNotasRapidas(){
+  const list  = document.getElementById('notasRapidasList');
+  const empty = document.getElementById('notasRapidasEmpty');
+
+  listen('notasRapidas', data => {
+    const notas = objToArr(data).reverse();
+    empty.style.display = notas.length?'none':'';
+    list.innerHTML = notas.map(n=>`
+      <div class="nota-rapida-item">
+        <span style="flex:1">${esc(n.texto)}</span>
+        <span style="font-size:10px;color:var(--color-text-tertiary)">${new Date(n.createdAt).toLocaleDateString('pt-BR')}</span>
+        <button class="btn-danger" onclick="delNotaRapida('${n._key}')" style="padding:2px 7px;font-size:11px">✕</button>
+      </div>`).join('');
+  });
+
+  window.delNotaRapida = k => del(`notasRapidas/${k}`);
+}
+
+window.addNotaRapida = () => {
+  const input = document.getElementById('notaRapidaInput');
+  const v = input.value.trim();
+  if(!v) return;
+  push('notasRapidas',{texto:v,createdAt:Date.now()});
+  input.value='';
+  notify('Nota salva ✓');
+};
+
+/* ── Rascunhos ── */
+function initRascunho(){
+  const editor = document.getElementById('rascunhoEditor');
+  if(!editor) return;
+  ref('rascunho').once('value', snap => {
+    if(snap.val()) editor.value = snap.val();
+  });
+  editor.addEventListener('input', () => {
+    clearTimeout(editor._t);
+    editor._t = setTimeout(() => ref('rascunho').set(editor.value), 1000);
+  });
+}
+
+window.salvarRascunho = () => {
+  const v = document.getElementById('rascunhoEditor').value;
+  ref('rascunho').set(v);
+  notify('Rascunho salvo ✓');
+};
+
+/* ── Calculadora ── */
+function initCalcMesa(){
+  window._calcExpr = '';
+}
+
+window.calcInput = v => {
+  if(window._calcExpr === '0') window._calcExpr = '';
+  window._calcExpr += v;
+  document.getElementById('calcDisplay').textContent = window._calcExpr || '0';
+};
+
+window.calcResult = () => {
+  try {
+    const expr = window._calcExpr.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');
+    const res  = Function('"use strict"; return (' + expr + ')')();
+    window._calcExpr = String(parseFloat(res.toFixed(10)));
+    document.getElementById('calcDisplay').textContent = window._calcExpr;
+  } catch { document.getElementById('calcDisplay').textContent = 'Erro'; window._calcExpr = ''; }
+};
+
+window.limparCalc = () => {
+  window._calcExpr = '';
+  document.getElementById('calcDisplay').textContent = '0';
+};
+
+/* ── Documentos recentes ── */
+function initDocs(){
+  const list  = document.getElementById('docList');
+  const empty = document.getElementById('docEmpty');
+
+  listen('docs', data => {
+    const docs = objToArr(data).reverse();
+    empty.style.display = docs.length?'none':'';
+    list.innerHTML = docs.map(d=>`
+      <div class="doc-item">
+        <span style="font-size:16px">📄</span>
+        <a href="${esc(d.link)}" target="_blank">${esc(d.nome)}</a>
+        <span style="font-size:11px;color:var(--color-text-tertiary)">${new Date(d.createdAt).toLocaleDateString('pt-BR')}</span>
+        <button class="btn-danger" onclick="delDoc('${d._key}')" style="padding:2px 7px;font-size:11px">✕</button>
+      </div>`).join('');
+  });
+
+  window.delDoc = k => del(`docs/${k}`);
+}
+
+window.addDoc = () => {
+  document.getElementById('docInputRow').style.display = 'flex';
+  document.getElementById('docNome').focus();
+};
+
+window.salvarDoc = () => {
+  const nome = document.getElementById('docNome').value.trim();
+  const link = document.getElementById('docLink').value.trim();
+  if(!nome||!link){ notify('Preencha nome e link ⚠️'); return; }
+  push('docs',{nome,link,createdAt:Date.now()});
+  document.getElementById('docNome').value='';
+  document.getElementById('docLink').value='';
+  document.getElementById('docInputRow').style.display='none';
+  notify('Documento salvo ✓');
+};
+
+/* ── E-mails ── */
+// Gmail — usa a Google API que já temos
+window.carregarGmail = async () => {
+  if(!window._gapiReady||!window._gisReady){ notify('Aguarde o carregamento do Google...'); return; }
+  document.querySelectorAll('.btn-email').forEach(b=>b.classList.remove('ativo'));
+  document.getElementById('btnGmail').classList.add('ativo');
+  document.getElementById('emailContaAtiva').textContent = '📧 Gmail';
+  document.getElementById('emailList').innerHTML = '<p class="empty-msg">Carregando...</p>';
+
+  return new Promise(resolve => {
+    window._tokenClient.callback = async resp => {
+      if(resp.error){ notify('Erro ao autenticar ⚠️'); resolve(); return; }
+      try {
+        // Carrega Gmail API
+        await gapi.client.load('gmail','v1');
+        const res = await gapi.client.gmail.users.messages.list({
+          userId:'me', maxResults:15, labelIds:['INBOX']
+        });
+        const msgs = res.result.messages || [];
+        if(!msgs.length){ document.getElementById('emailList').innerHTML='<p class="empty-msg">Nenhum e-mail encontrado.</p>'; resolve(); return; }
+
+        const detalhes = await Promise.all(msgs.slice(0,10).map(m =>
+          gapi.client.gmail.users.messages.get({ userId:'me', id:m.id, format:'metadata', metadataHeaders:['From','Subject','Date'] })
+        ));
+
+        document.getElementById('emailList').innerHTML = detalhes.map(r=>{
+          const h       = r.result.payload.headers;
+          const de      = h.find(x=>x.name==='From')?.value    || 'Desconhecido';
+          const assunto = h.find(x=>x.name==='Subject')?.value || '(sem assunto)';
+          const data    = h.find(x=>x.name==='Date')?.value    || '';
+          const naoLido = r.result.labelIds?.includes('UNREAD');
+          const ini     = de.charAt(0).toUpperCase();
+          const dtFmt   = data ? new Date(data).toLocaleDateString('pt-BR') : '';
+          return `<div class="email-item ${naoLido?'email-nao-lido':''}">
+            ${naoLido?'<div class="email-nao-lido-dot"></div>':'<div style="width:8px"></div>'}
+            <div class="email-avatar">${ini}</div>
+            <div style="flex:1;min-width:0">
+              <div class="email-remetente">${esc(de.split('<')[0].trim())}</div>
+              <div class="email-assunto">${esc(assunto)}</div>
+            </div>
+            <div class="email-data">${dtFmt}</div>
+          </div>`;
+        }).join('');
+
+      } catch(e){ console.error(e); notify('Erro ao carregar e-mails ⚠️'); }
+      resolve();
+    };
+    const scope = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/calendar.events';
+    if(!gapi.client.getToken()) window._tokenClient.requestAccessToken({ prompt:'consent', scope });
+    else window._tokenClient.requestAccessToken({ prompt:'', scope });
+  });
+};
+
+// Enviar e-mail via Gmail API
+window.enviarEmail = async () => {
+  const para    = document.getElementById('emailPara').value.trim();
+  const assunto = document.getElementById('emailAssunto').value.trim();
+  const corpo   = document.getElementById('emailCorpo').value.trim();
+  if(!para||!assunto||!corpo){ notify('Preencha todos os campos ⚠️'); return; }
+
+  try {
+    await gapi.client.load('gmail','v1');
+    const msg = [`To: ${para}`, `Subject: ${assunto}`, 'Content-Type: text/plain; charset=utf-8', '', corpo].join('\r\n');
+    const encoded = btoa(unescape(encodeURIComponent(msg))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    await gapi.client.gmail.users.messages.send({ userId:'me', resource:{ raw:encoded } });
+    notify('E-mail enviado ✓');
+    document.getElementById('composeArea').style.display='none';
+    document.getElementById('emailPara').value='';
+    document.getElementById('emailAssunto').value='';
+    document.getElementById('emailCorpo').value='';
+  } catch(e){ console.error(e); notify('Erro ao enviar e-mail ⚠️'); }
+};
+
+// Outlook — abre no navegador
+window.abrirOutlook = () => {
+  document.querySelectorAll('.btn-email').forEach(b=>b.classList.remove('ativo'));
+  document.getElementById('btnOutlook').classList.add('ativo');
+  document.getElementById('emailContaAtiva').textContent = '📧 Outlook';
+  document.getElementById('emailList').innerHTML = `
+    <div style="text-align:center;padding:20px">
+      <p style="font-size:14px;color:var(--color-text-secondary);margin-bottom:12px">O Outlook abre em uma nova aba.</p>
+      <button class="btn-add" onclick="window.open('https://outlook.live.com','_blank')">Abrir Outlook →</button>
+    </div>`;
+};
+
+// Yahoo — abre no navegador
+window.abrirYahoo = () => {
+  document.getElementById('emailContaAtiva').textContent = '📧 Yahoo Mail';
+  document.getElementById('emailList').innerHTML = `
+    <div style="text-align:center;padding:20px">
+      <p style="font-size:14px;color:var(--color-text-secondary);margin-bottom:12px">O Yahoo Mail abre em uma nova aba.</p>
+      <button class="btn-add" onclick="window.open('https://mail.yahoo.com','_blank')">Abrir Yahoo Mail →</button>
+    </div>`;
+};
+
+// Mail do Mac — abre o app nativo
+window.abrirMailMac = () => {
+  document.getElementById('emailContaAtiva').textContent = '✉️ Apple Mail';
+  document.getElementById('emailList').innerHTML = `
+    <div style="text-align:center;padding:20px">
+      <p style="font-size:14px;color:var(--color-text-secondary);margin-bottom:12px">Clique para abrir o app Mail do Mac com todas as suas contas.</p>
+      <button class="btn-add" onclick="window.location.href='message://'">✉️ Abrir Mail →</button>
+    </div>`;
+};
 
 /* ═══════════════════════════════════════
    CARD DO DIA

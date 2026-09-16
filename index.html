@@ -50,6 +50,7 @@
       <button class="tab-btn"        data-tab="metas"     role="tab" aria-selected="false" tabindex="-1">🎯 Metas</button>
       <button class="tab-btn"        data-tab="ideias"    role="tab" aria-selected="false" tabindex="-1">💡 Ideias</button>
       <button class="tab-btn"        data-tab="historico" role="tab" aria-selected="false" tabindex="-1">📊 Histórico</button>
+      <button class="tab-btn" data-tab="mesa" role="tab" aria-selected="false" tabindex="-1">🖥️ Mesa</button>
     </nav>
 
     <!-- ═══ ABA CASA ═══ -->
@@ -395,8 +396,127 @@
       </div>
     </section>
 
-    <!-- ═══ ABA HISTÓRICO ═══ -->
-    <section id="historico" class="panel" role="tabpanel">
+    <!-- ═══ ABA MESA DE TRABALHO ═══ -->
+    <section id="mesa" class="panel" role="tabpanel">
+      <h2>🖥️ Mesa de Trabalho</h2>
+
+      <div class="mesa-grid">
+
+        <!-- E-MAILS -->
+        <div class="mesa-card" style="grid-column: span 2">
+          <div class="mesa-card-header">
+            <span class="mesa-card-title">📧 E-mails</span>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn-email" id="btnGmail"   onclick="carregarGmail()">Gmail</button>
+              <button class="btn-email" id="btnOutlook" onclick="abrirOutlook()">Outlook</button>
+              <button class="btn-email" onclick="abrirYahoo()">Yahoo</button>
+              <button class="btn-email" onclick="abrirMailMac()">✉️ Mail</button>
+            </div>
+          </div>
+
+          <!-- Compose -->
+          <div id="composeArea" style="display:none;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;margin-bottom:12px">
+            <div class="input-row" style="margin-bottom:8px">
+              <input type="text" id="emailPara"    placeholder="Para..." style="flex:1"/>
+              <input type="text" id="emailAssunto" placeholder="Assunto..." style="flex:2"/>
+            </div>
+            <textarea id="emailCorpo" placeholder="Escreva sua mensagem..." rows="4" style="margin-bottom:8px"></textarea>
+            <div style="display:flex;gap:8px">
+              <button class="btn-add" onclick="enviarEmail()">📤 Enviar</button>
+              <button onclick="document.getElementById('composeArea').style.display='none'">Cancelar</button>
+            </div>
+          </div>
+
+          <!-- Lista de e-mails -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span style="font-size:13px;color:var(--color-text-secondary)" id="emailContaAtiva">Selecione uma conta</span>
+            <button class="btn-add" style="font-size:12px;padding:6px 12px" onclick="document.getElementById('composeArea').style.display='block'">✏️ Novo e-mail</button>
+          </div>
+          <div id="emailList">
+            <p class="empty-msg">Clique em uma conta para ver os e-mails.</p>
+          </div>
+        </div>
+
+        <!-- NOTAS RÁPIDAS -->
+        <div class="mesa-card">
+          <div class="mesa-card-header">
+            <span class="mesa-card-title">📝 Notas rápidas</span>
+            <button class="btn-add" style="font-size:11px;padding:5px 10px" onclick="addNotaRapida()">+ Nova</button>
+          </div>
+          <input type="text" id="notaRapidaInput" placeholder="Digite uma nota..." style="margin-bottom:10px" onkeydown="if(event.key==='Enter') addNotaRapida()"/>
+          <div id="notasRapidasList"></div>
+          <p id="notasRapidasEmpty" class="empty-msg" style="font-size:12px">Nenhuma nota ainda.</p>
+        </div>
+
+        <!-- AFAZERES DO DIA -->
+        <div class="mesa-card">
+          <div class="mesa-card-header">
+            <span class="mesa-card-title">✅ Afazeres do dia</span>
+          </div>
+          <div id="mesaTodoList"></div>
+          <p id="mesaTodoEmpty" class="empty-msg" style="font-size:12px">Nenhuma tarefa pendente.</p>
+          <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:8px">Sincronizado com a aba Casa</div>
+        </div>
+
+        <!-- CALCULADORA -->
+        <div class="mesa-card">
+          <div class="mesa-card-header">
+            <span class="mesa-card-title">🔢 Calculadora</span>
+            <button onclick="limparCalc()" style="font-size:11px;padding:4px 8px">C</button>
+          </div>
+          <div id="calcDisplay" style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 14px;font-size:22px;font-weight:500;color:var(--color-text-primary);text-align:right;margin-bottom:10px;min-height:44px;word-break:break-all">0</div>
+          <div class="calc-keys">
+            <button class="ck op" onclick="calcInput('(')">(</button>
+            <button class="ck op" onclick="calcInput(')')">)</button>
+            <button class="ck op" onclick="calcInput('%')">%</button>
+            <button class="ck op" onclick="calcInput('/')">÷</button>
+            <button class="ck" onclick="calcInput('7')">7</button>
+            <button class="ck" onclick="calcInput('8')">8</button>
+            <button class="ck" onclick="calcInput('9')">9</button>
+            <button class="ck op" onclick="calcInput('*')">×</button>
+            <button class="ck" onclick="calcInput('4')">4</button>
+            <button class="ck" onclick="calcInput('5')">5</button>
+            <button class="ck" onclick="calcInput('6')">6</button>
+            <button class="ck op" onclick="calcInput('-')">−</button>
+            <button class="ck" onclick="calcInput('1')">1</button>
+            <button class="ck" onclick="calcInput('2')">2</button>
+            <button class="ck" onclick="calcInput('3')">3</button>
+            <button class="ck op" onclick="calcInput('+')">+</button>
+            <button class="ck" onclick="calcInput('0')" style="grid-column:span 2">0</button>
+            <button class="ck" onclick="calcInput('.')">.</button>
+            <button class="ck eq" onclick="calcResult()">=</button>
+          </div>
+        </div>
+
+        <!-- BLOCO DE RASCUNHOS -->
+        <div class="mesa-card">
+          <div class="mesa-card-header">
+            <span class="mesa-card-title">✏️ Rascunhos</span>
+            <button onclick="salvarRascunho()" style="font-size:11px;padding:4px 8px">💾 Salvar</button>
+          </div>
+          <textarea id="rascunhoEditor" placeholder="Escreva seus rascunhos aqui..." style="min-height:180px;font-size:13px"></textarea>
+        </div>
+
+        <!-- DOCUMENTOS RECENTES -->
+        <div class="mesa-card" style="grid-column: span 2">
+          <div class="mesa-card-header">
+            <span class="mesa-card-title">📁 Links e documentos recentes</span>
+            <button class="btn-add" style="font-size:11px;padding:5px 10px" onclick="addDoc()">+ Adicionar</button>
+          </div>
+          <div class="input-row" id="docInputRow" style="display:none;margin-bottom:10px">
+            <input type="text" id="docNome"  placeholder="Nome do documento..." style="flex:2"/>
+            <input type="text" id="docLink"  placeholder="Link (URL)..." style="flex:3"/>
+            <button class="btn-add" onclick="salvarDoc()">Salvar</button>
+            <button onclick="document.getElementById('docInputRow').style.display='none'">✕</button>
+          </div>
+          <div id="docList"></div>
+          <p id="docEmpty" class="empty-msg" style="font-size:12px">Nenhum documento salvo ainda.</p>
+        </div>
+
+      </div>
+    </section>
+
+        <section id="historico" class="panel" role="tabpanel">
       <h2>Histórico de Produtividade</h2>
       <div class="hist-grid" id="histGrid"></div>
       <div class="hist-details" id="histDetails"></div>
