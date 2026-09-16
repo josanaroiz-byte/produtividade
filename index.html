@@ -3,32 +3,18 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-title" content="Portal de Produtividade"/>
   <title>Portal de Produtividade</title>
   <link rel="icon" type="image/png" href="icone.png"/>
   <link rel="apple-touch-icon" href="icone.png"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-title" content="Portal de Produtividade"/>
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
 
 <div id="notification" class="notification" role="alert" aria-live="assertive"></div>
 
-<!-- ═══ TELA DE LOGIN ═══ -->
-<div id="screen-login">
-  <div class="login-box">
-    <div class="login-icon">⚡</div>
-    <h1>Portal de Produtividade</h1>
-    <p>Entre com sua conta Google para sincronizar seus dados em todos os dispositivos.</p>
-    <button id="loginBtn" class="btn-google">
-      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
-      Entrar com Google
-    </button>
-    <p class="login-footer">Elaborado por <strong>Josana Roiz</strong> · @josanaroiz</p>
-  </div>
-</div>
-
-<!-- ═══ APP PRINCIPAL ═══ -->
 <!-- ═══ MODO FOCO ═══ -->
 <div id="focoOverlay" class="foco-overlay" style="display:none">
   <div style="font-size:14px;opacity:0.6;margin-bottom:8px">MODO FOCO</div>
@@ -49,8 +35,22 @@
   <div style="margin-top:24px;font-size:13px;opacity:0.5" id="focoSessoes"></div>
 </div>
 
-<div id="screen-app" style="display:none">
+<!-- ═══ TELA DE LOGIN ═══ -->
+<div id="screen-login">
+  <div class="login-box">
+    <div class="login-icon">⚡</div>
+    <h1>Portal de Produtividade</h1>
+    <p>Entre com sua conta Google para sincronizar seus dados em todos os dispositivos.</p>
+    <button id="loginBtn" class="btn-google">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+      Entrar com Google
+    </button>
+    <p class="login-footer">Elaborado por <strong>Josana Roiz</strong> · @josanaroiz</p>
+  </div>
+</div>
 
+<!-- ═══ APP PRINCIPAL ═══ -->
+<div id="screen-app" style="display:none">
   <div class="container">
 
     <header>
@@ -71,14 +71,13 @@
       <button class="tab-btn"        data-tab="agenda"    role="tab" aria-selected="false" tabindex="-1">📅 Agenda</button>
       <button class="tab-btn"        data-tab="metas"     role="tab" aria-selected="false" tabindex="-1">🎯 Metas</button>
       <button class="tab-btn"        data-tab="ideias"    role="tab" aria-selected="false" tabindex="-1">💡 Ideias</button>
+      <button class="tab-btn"        data-tab="mesa"      role="tab" aria-selected="false" tabindex="-1">🖥️ Mesa</button>
       <button class="tab-btn"        data-tab="historico" role="tab" aria-selected="false" tabindex="-1">📊 Histórico</button>
-      <button class="tab-btn" data-tab="mesa" role="tab" aria-selected="false" tabindex="-1">🖥️ Mesa</button>
     </nav>
 
     <!-- ═══ ABA CASA ═══ -->
     <section id="casa" class="panel active" role="tabpanel">
 
-      <!-- Resumo do dia -->
       <div class="dia-card" id="diaCard">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
           <div>
@@ -95,13 +94,12 @@
 
       <h2 style="margin-top:20px">Minhas Tarefas</h2>
       <div class="input-row">
-        <input type="text" id="todoInput" placeholder="Nova tarefa ou lista (ex: Mercado)..." aria-label="Nova tarefa"/>
+        <input type="text" id="todoInput" placeholder="Nova tarefa ou lista (ex: Mercado)..."/>
         <button class="btn-add" id="addTodoBtn">+ Adicionar</button>
       </div>
       <div id="todoList" role="list"></div>
       <p id="todoEmpty" class="empty-msg">Nenhuma tarefa. Comece adicionando uma! ✨</p>
 
-      <!-- Prestadores -->
       <h3 class="sub-title" style="margin-top:28px">👷 Prestadores de Serviço</h3>
       <div class="input-row">
         <button class="btn-add" id="addPrestadorBtn">+ Novo prestador</button>
@@ -109,18 +107,14 @@
       <div id="prestadorList" role="list"></div>
       <p id="prestadorEmpty" class="empty-msg">Nenhum prestador cadastrado ainda.</p>
 
-      <!-- Modal prestador -->
       <div id="prestadorModal" class="modal-overlay" style="display:none">
         <div class="modal-box">
           <div class="modal-header">
             <span class="modal-title" id="prestadorModalTitle">Novo prestador</span>
             <button class="modal-close" onclick="closePrestadorModal()">✕</button>
           </div>
-
           <p style="font-size:12px;font-weight:700;color:#000;margin-bottom:8px">Dados pessoais</p>
-          <div class="input-row">
-            <input type="text" id="pNome"         placeholder="Nome completo"/>
-          </div>
+          <div class="input-row"><input type="text" id="pNome" placeholder="Nome completo"/></div>
           <div class="input-row">
             <select id="pEspecialidade">
               <option value="Encanador">🔧 Encanador</option>
@@ -137,16 +131,12 @@
             <input type="text" id="pTelefone" placeholder="Telefone / WhatsApp"/>
             <input type="text" id="pEmail"    placeholder="E-mail (opcional)"/>
           </div>
-
           <p style="font-size:12px;font-weight:700;color:#000;margin:10px 0 8px">Endereço</p>
-          <div class="input-row">
-            <input type="text" id="pEndereco" placeholder="Rua / Av. e número"/>
-          </div>
+          <div class="input-row"><input type="text" id="pEndereco" placeholder="Rua / Av. e número"/></div>
           <div class="input-row">
             <input type="text" id="pBairro" placeholder="Bairro"/>
             <input type="text" id="pCidade" placeholder="Cidade"/>
           </div>
-
           <p style="font-size:12px;font-weight:700;color:#000;margin:10px 0 8px">Dados bancários / Pix</p>
           <div class="input-row">
             <select id="pPixTipo">
@@ -163,14 +153,11 @@
             <input type="text" id="pAgencia" placeholder="Agência"/>
             <input type="text" id="pConta"   placeholder="Conta"/>
           </div>
-
           <p style="font-size:12px;font-weight:700;color:#000;margin:10px 0 8px">Observações</p>
           <textarea id="pObs" placeholder="Anotações extras..." rows="3" style="margin-bottom:14px"></textarea>
-
           <button class="btn-add" style="width:100%" onclick="salvarPrestador()">Salvar prestador</button>
         </div>
       </div>
-
     </section>
 
     <!-- ═══ ABA TRABALHO ═══ -->
@@ -190,7 +177,7 @@
         </div>
       </div>
       <div class="input-row" style="margin-top:20px">
-        <input type="text" id="noteTitleInput" placeholder="Título da nota..." aria-label="Título da nota"/>
+        <input type="text" id="noteTitleInput" placeholder="Título da nota..."/>
         <button class="btn-add" id="addNoteBtn">+ Nova nota</button>
       </div>
       <div id="noteList" role="list"></div>
@@ -200,22 +187,18 @@
     <!-- ═══ ABA FINANÇAS ═══ -->
     <section id="financas" class="panel" role="tabpanel">
       <h2>Gestão Financeira</h2>
-
-      <!-- Seletor de moeda -->
       <div class="moeda-row">
         <span style="font-size:14px;font-weight:500;color:#000">Moeda:</span>
-        <button class="btn-moeda active" id="btnReal" onclick="setMoeda('BRL')">🇧🇷 Real (R$)</button>
-        <button class="btn-moeda" id="btnDolar" onclick="setMoeda('USD')">🇺🇸 Dólar (US$)</button>
+        <button class="btn-moeda active" id="btnReal"  onclick="setMoeda('BRL')">🇧🇷 Real (R$)</button>
+        <button class="btn-moeda"        id="btnDolar" onclick="setMoeda('USD')">🇺🇸 Dólar (US$)</button>
       </div>
-
       <div class="finance-tabs" role="tablist">
-        <button class="ftab active" data-fin="fluxo" role="tab" aria-selected="true">Fluxo de Caixa</button>
-        <button class="ftab" data-fin="categ"  role="tab" aria-selected="false">Categorias</button>
-        <button class="ftab" data-fin="meta"   role="tab" aria-selected="false">Meta de Economia</button>
-        <button class="ftab" data-fin="calc"   role="tab" aria-selected="false">Simulador</button>
+        <button class="ftab active" data-fin="fluxo" role="tab">Fluxo de Caixa</button>
+        <button class="ftab"        data-fin="categ" role="tab">Categorias</button>
+        <button class="ftab"        data-fin="meta"  role="tab">Meta de Economia</button>
+        <button class="ftab"        data-fin="calc"  role="tab">Simulador</button>
       </div>
 
-      <!-- Fluxo -->
       <div id="fluxo" class="fin-panel active" role="tabpanel">
         <div class="input-row">
           <select id="finTipo">
@@ -237,13 +220,12 @@
             <option value="Outros">📦 Outros</option>
           </select>
         </div>
-        <!-- Parcelas -->
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
             <input type="checkbox" id="finParcelado" style="width:15px;height:15px;accent-color:#0d1f3c" onchange="toggleParcelado()">
             Parcelado / Recorrente
           </label>
-          <div id="finParcelaOpts" style="display:none;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <div id="finParcelaOpts" style="display:none;gap:8px;flex-wrap:wrap;align-items:center">
             <input type="number" id="finNumParcelas" placeholder="Nº de parcelas" style="max-width:130px;margin:0"/>
             <select id="finRecorrencia" style="max-width:150px;margin:0">
               <option value="mensal">🔁 Mensal</option>
@@ -254,7 +236,6 @@
           </div>
           <button class="btn-add" id="addFinBtn">+ Lançar</button>
         </div>
-        <!-- Filtros -->
         <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
           <button class="btn-filtro active" onclick="filtrarFluxo('todos')">Todos</button>
           <button class="btn-filtro" onclick="filtrarFluxo('entrada')">📈 Entradas</button>
@@ -270,7 +251,6 @@
         </div>
       </div>
 
-      <!-- Categorias -->
       <div id="categ" class="fin-panel" role="tabpanel">
         <div class="input-row">
           <input type="text"   id="categDesc"  placeholder="Descrição..."/>
@@ -291,7 +271,6 @@
         <canvas id="categChart" height="220" style="margin-top:16px;max-width:100%"></canvas>
       </div>
 
-      <!-- Meta de economia -->
       <div id="meta" class="fin-panel" role="tabpanel">
         <div class="input-row">
           <input type="text"   id="metaNome" placeholder="Nome da meta..."/>
@@ -302,7 +281,6 @@
         <p id="metaFinEmpty" class="empty-msg">Nenhuma meta criada ainda. 🏦</p>
       </div>
 
-      <!-- Simulador -->
       <div id="calc" class="fin-panel" role="tabpanel">
         <h3 class="sub-title">📈 Simulador de Renda Fixa</h3>
         <div class="calc-grid">
@@ -313,25 +291,12 @@
         </div>
         <button class="btn-add" id="calculateBtn" style="margin-top:12px;width:100%">Calcular Rendimento</button>
         <div class="balance-box" id="calcResult">---</div>
-
         <h3 class="sub-title" style="margin-top:24px">💱 Conversor de Moeda</h3>
         <div class="calc-grid">
           <label>Valor<input type="number" id="convValor" placeholder="0,00"/></label>
-          <label>De
-            <select id="convDe">
-              <option value="BRL">Real (R$)</option>
-              <option value="USD">Dólar (US$)</option>
-              <option value="EUR">Euro (€)</option>
-            </select>
-          </label>
-          <label>Para
-            <select id="convPara">
-              <option value="USD">Dólar (US$)</option>
-              <option value="BRL">Real (R$)</option>
-              <option value="EUR">Euro (€)</option>
-            </select>
-          </label>
-          <label>Cotação (1 unidade da moeda de origem = ? destino)<input type="number" id="convCotacao" placeholder="Ex: 5.10"/></label>
+          <label>De<select id="convDe"><option value="BRL">Real (R$)</option><option value="USD">Dólar (US$)</option><option value="EUR">Euro (€)</option></select></label>
+          <label>Para<select id="convPara"><option value="USD">Dólar (US$)</option><option value="BRL">Real (R$)</option><option value="EUR">Euro (€)</option></select></label>
+          <label>Cotação<input type="number" id="convCotacao" placeholder="Ex: 5.10"/></label>
         </div>
         <button class="btn-add" id="convertBtn" style="margin-top:12px;width:100%">Converter</button>
         <div class="balance-box" id="convResult">---</div>
@@ -412,7 +377,7 @@
             <button class="modal-close" onclick="closeDiaryModal()">✕</button>
           </div>
           <input type="text" id="diaryTitleInput" placeholder="Título..." style="margin-bottom:10px"/>
-          <textarea id="diaryTextInput" placeholder="Como foi seu dia? O que você sentiu, aprendeu, conquistou..." rows="8"></textarea>
+          <textarea id="diaryTextInput" placeholder="Como foi seu dia?" rows="8"></textarea>
           <button class="btn-add" style="width:100%;margin-top:10px" onclick="saveDiaryEntry()">Salvar entrada</button>
         </div>
       </div>
@@ -421,26 +386,22 @@
     <!-- ═══ ABA MESA DE TRABALHO ═══ -->
     <section id="mesa" class="panel" role="tabpanel">
       <h2>🖥️ Mesa de Trabalho</h2>
-
       <div class="mesa-grid">
 
-        <!-- E-MAILS -->
-        <div class="mesa-card" style="grid-column: span 2">
+        <div class="mesa-card" style="grid-column:span 2">
           <div class="mesa-card-header">
             <span class="mesa-card-title">📧 E-mails</span>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               <button class="btn-email" id="btnGmail"   onclick="carregarGmail()">Gmail</button>
               <button class="btn-email" id="btnOutlook" onclick="abrirOutlook()">Outlook</button>
-              <button class="btn-email" onclick="abrirYahoo()">Yahoo</button>
-              <button class="btn-email" onclick="abrirMailMac()">✉️ Mail</button>
+              <button class="btn-email"                 onclick="abrirYahoo()">Yahoo</button>
+              <button class="btn-email"                 onclick="abrirMailMac()">✉️ Mail</button>
             </div>
           </div>
-
-          <!-- Compose -->
-          <div id="composeArea" style="display:none;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;margin-bottom:12px">
+          <div id="composeArea" style="display:none;background:#f5f5f5;border-radius:10px;padding:12px;margin-bottom:12px">
             <div class="input-row" style="margin-bottom:8px">
-              <input type="text" id="emailPara"    placeholder="Para..." style="flex:1"/>
-              <input type="text" id="emailAssunto" placeholder="Assunto..." style="flex:2"/>
+              <input type="text" id="emailPara"    placeholder="Para..."/>
+              <input type="text" id="emailAssunto" placeholder="Assunto..."/>
             </div>
             <textarea id="emailCorpo" placeholder="Escreva sua mensagem..." rows="4" style="margin-bottom:8px"></textarea>
             <div style="display:flex;gap:8px">
@@ -448,18 +409,13 @@
               <button onclick="document.getElementById('composeArea').style.display='none'">Cancelar</button>
             </div>
           </div>
-
-          <!-- Lista de e-mails -->
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <span style="font-size:13px;color:var(--color-text-secondary)" id="emailContaAtiva">Selecione uma conta</span>
+            <span style="font-size:13px;color:#666" id="emailContaAtiva">Selecione uma conta</span>
             <button class="btn-add" style="font-size:12px;padding:6px 12px" onclick="document.getElementById('composeArea').style.display='block'">✏️ Novo e-mail</button>
           </div>
-          <div id="emailList">
-            <p class="empty-msg">Clique em uma conta para ver os e-mails.</p>
-          </div>
+          <div id="emailList"><p class="empty-msg">Clique em uma conta para ver os e-mails.</p></div>
         </div>
 
-        <!-- NOTAS RÁPIDAS -->
         <div class="mesa-card">
           <div class="mesa-card-header">
             <span class="mesa-card-title">📝 Notas rápidas</span>
@@ -470,23 +426,21 @@
           <p id="notasRapidasEmpty" class="empty-msg" style="font-size:12px">Nenhuma nota ainda.</p>
         </div>
 
-        <!-- AFAZERES DO DIA -->
         <div class="mesa-card">
           <div class="mesa-card-header">
             <span class="mesa-card-title">✅ Afazeres do dia</span>
           </div>
           <div id="mesaTodoList"></div>
           <p id="mesaTodoEmpty" class="empty-msg" style="font-size:12px">Nenhuma tarefa pendente.</p>
-          <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:8px">Sincronizado com a aba Casa</div>
+          <div style="font-size:11px;color:#aaa;margin-top:8px">Sincronizado com a aba Casa</div>
         </div>
 
-        <!-- CALCULADORA -->
         <div class="mesa-card">
           <div class="mesa-card-header">
             <span class="mesa-card-title">🔢 Calculadora</span>
             <button onclick="limparCalc()" style="font-size:11px;padding:4px 8px">C</button>
           </div>
-          <div id="calcDisplay" style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 14px;font-size:22px;font-weight:500;color:var(--color-text-primary);text-align:right;margin-bottom:10px;min-height:44px;word-break:break-all">0</div>
+          <div id="calcDisplay" style="background:#f5f5f5;border-radius:8px;padding:10px 14px;font-size:22px;font-weight:500;text-align:right;margin-bottom:10px;min-height:44px;word-break:break-all">0</div>
           <div class="calc-keys">
             <button class="ck op" onclick="calcInput('(')">(</button>
             <button class="ck op" onclick="calcInput(')')">)</button>
@@ -510,7 +464,6 @@
           </div>
         </div>
 
-        <!-- BLOCO DE RASCUNHOS -->
         <div class="mesa-card">
           <div class="mesa-card-header">
             <span class="mesa-card-title">✏️ Rascunhos</span>
@@ -519,15 +472,14 @@
           <textarea id="rascunhoEditor" placeholder="Escreva seus rascunhos aqui..." style="min-height:180px;font-size:13px"></textarea>
         </div>
 
-        <!-- DOCUMENTOS RECENTES -->
-        <div class="mesa-card" style="grid-column: span 2">
+        <div class="mesa-card" style="grid-column:span 2">
           <div class="mesa-card-header">
             <span class="mesa-card-title">📁 Links e documentos recentes</span>
             <button class="btn-add" style="font-size:11px;padding:5px 10px" onclick="addDoc()">+ Adicionar</button>
           </div>
           <div class="input-row" id="docInputRow" style="display:none;margin-bottom:10px">
-            <input type="text" id="docNome"  placeholder="Nome do documento..." style="flex:2"/>
-            <input type="text" id="docLink"  placeholder="Link (URL)..." style="flex:3"/>
+            <input type="text" id="docNome" placeholder="Nome do documento..." style="flex:2"/>
+            <input type="text" id="docLink" placeholder="Link (URL)..." style="flex:3"/>
             <button class="btn-add" onclick="salvarDoc()">Salvar</button>
             <button onclick="document.getElementById('docInputRow').style.display='none'">✕</button>
           </div>
@@ -538,8 +490,25 @@
       </div>
     </section>
 
-        <section id="historico" class="panel" role="tabpanel">
+    <!-- ═══ ABA HISTÓRICO ═══ -->
+    <section id="historico" class="panel" role="tabpanel">
       <h2>Histórico de Produtividade</h2>
+
+      <div class="clima-widget" id="climaWidget">
+        <div style="font-size:36px" id="climaIcon">⏳</div>
+        <div class="clima-info">
+          <div class="clima-cidade">Barra da Tijuca, Rio de Janeiro</div>
+          <div class="clima-temp" id="climaTemp">--°C</div>
+          <div class="clima-desc" id="climaDesc">Carregando...</div>
+          <div class="clima-detalhes" id="climaDetalhes"></div>
+        </div>
+      </div>
+
+      <div class="revisao-card" id="revisaoCard">
+        <div class="revisao-title">📊 Revisão da semana</div>
+        <div class="revisao-grid" id="revisaoGrid"></div>
+      </div>
+
       <div class="hist-grid" id="histGrid"></div>
       <div class="hist-details" id="histDetails"></div>
     </section>
