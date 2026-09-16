@@ -132,7 +132,8 @@ function initApp(){
   const dd = document.getElementById('diaryDate');
   if(dd) dd.textContent = today();
 
-  initTema();
+  if(typeof initTema === 'function') initTema();
+  else setTimeout(()=>{ if(typeof initTema==='function') initTema(); },500);
   initDiaCard();
   initTodos();
   initPrestadores();
@@ -1230,8 +1231,8 @@ function initDiary(){
    HISTÓRICO
 ═══════════════════════════════════════ */
 function renderHistorico(){
-  carregarClima();
-  renderRevisaoSemanal();
+  if(typeof carregarClima==='function') carregarClima();
+  if(typeof renderRevisaoSemanal==='function') renderRevisaoSemanal();
   const todos   = [];
   const habitos = [];
   const tk      = todayKey();
