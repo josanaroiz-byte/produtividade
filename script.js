@@ -115,6 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
    INIT APP
 ═══════════════════════════════════════ */
 function initApp(){
+  // Tema precisa ser iniciado após as funções estarem definidas
+  setTimeout(()=>{ if(typeof initTema==='function') initTema(); }, 100);
   initTabs('nav[role="tablist"] .tab-btn', btn => {
     document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
     const panel = document.getElementById(btn.dataset.tab);
@@ -132,7 +134,6 @@ function initApp(){
   const dd = document.getElementById('diaryDate');
   if(dd) dd.textContent = today();
 
-  initTema();
   initDiaCard();
   initTodos();
   initPrestadores();
