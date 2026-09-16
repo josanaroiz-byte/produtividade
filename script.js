@@ -450,48 +450,62 @@ window.carregarGmail = async () => {
   document.getElementById('emailContaAtiva').textContent = '📧 Gmail';
   document.getElementById('emailList').innerHTML = '<p class="empty-msg">Carregando...</p>';
 
-  return new Promise(resolve => {
-    window._tokenClient.callback = async resp => {
-      if(resp.error){ notify('Erro ao autenticar ⚠️'); resolve(); return; }
-      try {
-        // Carrega Gmail API
-        await gapi.client.load('gmail','v1');
-        const res = await gapi.client.gmail.users.messages.list({
-          userId:'me', maxResults:15, labelIds:['INBOX']
-        });
-        const msgs = res.result.messages || [];
-        if(!msgs.length){ document.getElementById('emailList').innerHTML='<p class="empty-msg">Nenhum e-mail encontrado.</p>'; resolve(); return; }
+  try {
+    // Verifica se já tem token válido
+    const token = gapi.client.getToken();
 
-        const detalhes = await Promise.all(msgs.slice(0,10).map(m =>
-          gapi.client.gmail.users.messages.get({ userId:'me', id:m.id, format:'metadata', metadataHeaders:['From','Subject','Date'] })
-        ));
+    if(!token){
+      // Usa redirect em vez de popup para evitar bloqueio COOP
+      window._tokenClient.requestAccessToken({ prompt: 'consent' });
+      return;
+    }
 
-        document.getElementById('emailList').innerHTML = detalhes.map(r=>{
-          const h       = r.result.payload.headers;
-          const de      = h.find(x=>x.name==='From')?.value    || 'Desconhecido';
-          const assunto = h.find(x=>x.name==='Subject')?.value || '(sem assunto)';
-          const data    = h.find(x=>x.name==='Date')?.value    || '';
-          const naoLido = r.result.labelIds?.includes('UNREAD');
-          const ini     = de.charAt(0).toUpperCase();
-          const dtFmt   = data ? new Date(data).toLocaleDateString('pt-BR') : '';
-          return `<div class="email-item ${naoLido?'email-nao-lido':''}">
-            ${naoLido?'<div class="email-nao-lido-dot"></div>':'<div style="width:8px"></div>'}
-            <div class="email-avatar">${ini}</div>
-            <div style="flex:1;min-width:0">
-              <div class="email-remetente">${esc(de.split('<')[0].trim())}</div>
-              <div class="email-assunto">${esc(assunto)}</div>
-            </div>
-            <div class="email-data">${dtFmt}</div>
-          </div>`;
-        }).join('');
+    await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest');
 
-      } catch(e){ console.error(e); notify('Erro ao carregar e-mails ⚠️'); }
-      resolve();
-    };
-    const scope = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/calendar.events';
-    if(!gapi.client.getToken()) window._tokenClient.requestAccessToken({ prompt:'consent', scope });
-    else window._tokenClient.requestAccessToken({ prompt:'', scope });
-  });
+    const res = await gapi.client.gmail.users.messages.list({
+      userId:'me', maxResults:15, labelIds:['INBOX']
+    });
+    const msgs = res.result.messages || [];
+    if(!msgs.length){
+      document.getElementById('emailList').innerHTML='<p class="empty-msg">Nenhum e-mail encontrado.</p>';
+      return;
+    }
+
+    const detalhes = await Promise.all(msgs.slice(0,10).map(m =>
+      gapi.client.gmail.users.messages.get({
+        userId:'me', id:m.id, format:'metadata',
+        metadataHeaders:['From','Subject','Date']
+      })
+    ));
+
+    document.getElementById('emailList').innerHTML = detalhes.map(r=>{
+      const h       = r.result.payload.headers;
+      const de      = h.find(x=>x.name==='From')?.value    || 'Desconhecido';
+      const assunto = h.find(x=>x.name==='Subject')?.value || '(sem assunto)';
+      const data    = h.find(x=>x.name==='Date')?.value    || '';
+      const naoLido = r.result.labelIds?.includes('UNREAD');
+      const ini     = de.charAt(0).toUpperCase();
+      const dtFmt   = data ? new Date(data).toLocaleDateString('pt-BR') : '';
+      return `<div class="email-item ${naoLido?'email-nao-lido':''}">
+        ${naoLido?'<div class="email-nao-lido-dot"></div>':'<div style="width:8px"></div>'}
+        <div class="email-avatar">${ini}</div>
+        <div style="flex:1;min-width:0">
+          <div class="email-remetente">${esc(de.split('<')[0].trim())}</div>
+          <div class="email-assunto">${esc(assunto)}</div>
+        </div>
+        <div class="email-data">${dtFmt}</div>
+      </div>`;
+    }).join('');
+
+  } catch(e){
+    console.error(e);
+    // Se der erro de autenticação, pede token novamente
+    if(e.status === 401 || e.status === 403){
+      window._tokenClient.requestAccessToken({ prompt: '' });
+    } else {
+      notify('Erro ao carregar e-mails. Tente novamente ⚠️');
+    }
+  }
 };
 
 // Enviar e-mail via Gmail API
@@ -1081,9 +1095,13 @@ function loadGoogleLibs(){
   s2.src='https://accounts.google.com/gsi/client';
   s2.onload=()=>{
     window._tokenClient=google.accounts.oauth2.initTokenClient({
-      client_id:GCAL_CLIENT_ID,
-      scope:'https://www.googleapis.com/auth/calendar.events',
-      callback:''
+      client_id: GCAL_CLIENT_ID,
+      scope: [
+        'https://www.googleapis.com/auth/calendar.events',
+        'https://www.googleapis.com/auth/gmail.readonly',
+        'https://www.googleapis.com/auth/gmail.send'
+      ].join(' '),
+      callback: ''
     });
     window._gisReady=true;
   };
