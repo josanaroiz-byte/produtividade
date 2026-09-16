@@ -1283,4 +1283,108 @@ function renderHistorico(){
       });
     });
   });
+   function initTema(){
+  const salvo = localStorage.getItem('portal_tema') || 'claro';
+  aplicarTema(salvo);
+}
+function aplicarTema(tema){
+  document.body.classList.toggle('tema-escuro', tema === 'escuro');
+  const btn = document.getElementById('btnTema');
+  if(btn) btn.textContent = tema === 'escuro' ? '☀️' : '🌙';
+  localStorage.setItem('portal_tema', tema);
+}
+window.toggleTema = () => {
+  const atual = localStorage.getItem('portal_tema') || 'claro';
+  aplicarTema(atual === 'claro' ? 'escuro' : 'claro');
+};
+async function carregarClima(){
+  try {
+    const lat = -23.0127, lon = -43.3654;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,windspeed_10m,relative_humidity_2m&timezone=America/Sao_Paulo`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    const c    = data.current;
+    const icons = {0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',51:'🌦',61:'🌧',80:'🌦',95:'⛈'};
+    const descs = {0:'Céu limpo',1:'Principalmente limpo',2:'Parcialmente nublado',3:'Nublado',45:'Névoa',51:'Garoa',61:'Chuva',80:'Pancadas de chuva',95:'Tempestade'};
+    const code = c.weathercode;
+    document.getElementById('climaIcon').textContent  = icons[code] || '🌡';
+    document.getElementById('climaTemp').textContent  = `${Math.round(c.temperature_2m)}°C`;
+    document.getElementById('climaDesc').textContent  = descs[code] || 'Variável';
+    document.getElementById('climaDetalhes').textContent = `💧 ${c.relative_humidity_2m}% umidade · 💨 ${Math.round(c.windspeed_10m)} km/h vento`;
+  } catch(e){ document.getElementById('climaDesc').textContent = 'Dados indisponíveis'; }
+}
+async function renderRevisaoSemanal(){
+  const grid = document.getElementById('revisaoGrid');
+  if(!grid) return;
+  const inicioSemana = new Date();
+  inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay());
+  inicioSemana.setHours(0,0,0,0);
+  const ts = inicioSemana.getTime();
+  const [snapTodos,snapHabitos,snapFins,snapIdeias,snapFoco] = await Promise.all([
+    ref('todos').once('value'),ref('habitos').once('value'),
+    ref('finances').once('value'),ref('ideias').once('value'),
+    ref('sessoesFoco').once('value'),
+  ]);
+  const todos   = objToArr(snapTodos.val()).filter(t=>t.done&&(t.createdAt||0)>=ts);
+  const habitos = objToArr(snapHabitos.val());
+  const fins    = objToArr(snapFins.val()).filter(f=>(f.createdAt||0)>=ts);
+  const ideias  = objToArr(snapIdeias.val()).filter(i=>(i.createdAt||0)>=ts);
+  const focos   = objToArr(snapFoco.val()).filter(f=>(f.data||0)>=ts);
+  const entradas = fins.filter(f=>f.tipo==='entrada').reduce((s,f)=>s+f.val,0);
+  const saidas   = fins.filter(f=>f.tipo==='saida').reduce((s,f)=>s+f.val,0);
+  const streak   = Math.max(...habitos.map(h=>h.streak||0),0);
+  grid.innerHTML = [
+    {val:todos.length,        label:'Tarefas concluídas'},
+    {val:focos.length,        label:'Sessões de foco'},
+    {val:ideias.length,       label:'Ideias registradas'},
+    {val:`R$ ${entradas.toFixed(0)}`, label:'Entradas na semana'},
+    {val:`R$ ${saidas.toFixed(0)}`,   label:'Saídas na semana'},
+    {val:streak+'d',          label:'Melhor sequência'},
+  ].map(i=>`<div class="revisao-item"><div class="revisao-val">${i.val}</div><div class="revisao-label">${i.label}</div></div>`).join('');
+}
+window.abrirFoco = () => {
+  document.getElementById('focoOverlay').style.display = 'flex';
+  atualizarFocoDisplay();
+};
+window.fecharFoco = () => {
+  document.getElementById('focoOverlay').style.display = 'none';
+  pausarFoco(); pararMusica();
+};
+let focoInterval=null, focoSeg=25*60, focoRodando=false, focoSessoes=0, audioCtx=null;
+function atualizarFocoDisplay(){
+  const m=Math.floor(focoSeg/60),s=focoSeg%60;
+  document.getElementById('focoTimer').textContent=`${m}:${s<10?'0':''}${s}`;
+  document.getElementById('focoSessoes').textContent=focoSessoes>0?`✓ ${focoSessoes} sessão(ões) concluída(s) hoje`:'';
+}
+window.focoStart = () => {
+  if(focoRodando){pausarFoco();return;}
+  focoRodando=true;
+  document.getElementById('focoBtnStart').textContent='⏸ Pausar';
+  focoInterval=setInterval(()=>{
+    focoSeg--;atualizarFocoDisplay();
+    if(focoSeg<=0){
+      clearInterval(focoInterval);focoRodando=false;focoSessoes++;
+      document.getElementById('focoBtnStart').textContent='▶ Iniciar';
+      document.getElementById('focoMsg').textContent='🎉 Sessão concluída! Descanse.';
+      focoSeg=25*60;atualizarFocoDisplay();notify('⏰ Sessão de foco concluída!');
+      push('sessoesFoco',{data:Date.now(),duracao:25});
+    }
+  },1000);
+};
+function pausarFoco(){clearInterval(focoInterval);focoRodando=false;const btn=document.getElementById('focoBtnStart');if(btn)btn.textContent='▶ Iniciar';}
+window.focoReset=()=>{pausarFoco();focoSeg=25*60;atualizarFocoDisplay();document.getElementById('focoMsg').textContent='Foque no que importa 🎯';};
+window.tocarMusica=tipo=>{
+  pararMusica();
+  document.querySelectorAll('.btn-musica').forEach(b=>b.classList.remove('ativo'));
+  event.target.classList.add('ativo');
+  if(tipo==='silencio')return;
+  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  const freq={chuva:[200,400,800],cafe:[300,600],natureza:[150,300,600,900]}[tipo]||[300];
+  freq.forEach(f=>{
+    const osc=audioCtx.createOscillator(),gain=audioCtx.createGain(),filt=audioCtx.createBiquadFilter();
+    filt.type='lowpass';filt.frequency.value=f*2;osc.type='sawtooth';osc.frequency.value=f+Math.random()*10;gain.gain.value=0.02;
+    osc.connect(filt);filt.connect(gain);gain.connect(audioCtx.destination);osc.start();
+  });
+};
+function pararMusica(){if(audioCtx){audioCtx.close();audioCtx=null;}document.querySelectorAll('.btn-musica').forEach(b=>b.classList.remove('ativo'));}
 }
