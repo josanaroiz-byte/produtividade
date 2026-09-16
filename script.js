@@ -3,8 +3,7 @@
 /* ═══════════════════════════════════════
    CONFIGURAÇÃO
 ═══════════════════════════════════════ */
-const GCAL_API_KEY   = "AIzaSyAdCoTdFQ6vMdqAwlANNxd_vz90Ii6qvxs";
-const GCAL_CLIENT_ID = "510073834567-ossj5sqfbetoj7glofqpmm4raqvduic2.apps.googleusercontent.com";
+
 
 /* ═══════════════════════════════════════
    FIREBASE INIT
