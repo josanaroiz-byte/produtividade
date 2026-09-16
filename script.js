@@ -132,6 +132,7 @@ function initApp(){
   const dd = document.getElementById('diaryDate');
   if(dd) dd.textContent = today();
 
+  initTema();
   initDiaCard();
   initTodos();
   initPrestadores();
@@ -1229,6 +1230,8 @@ function initDiary(){
    HISTÓRICO
 ═══════════════════════════════════════ */
 function renderHistorico(){
+  carregarClima();
+  renderRevisaoSemanal();
   const todos   = [];
   const habitos = [];
   const tk      = todayKey();

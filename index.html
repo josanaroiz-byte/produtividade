@@ -29,6 +29,26 @@
 </div>
 
 <!-- ═══ APP PRINCIPAL ═══ -->
+<!-- ═══ MODO FOCO ═══ -->
+<div id="focoOverlay" class="foco-overlay" style="display:none">
+  <div style="font-size:14px;opacity:0.6;margin-bottom:8px">MODO FOCO</div>
+  <div class="foco-timer" id="focoTimer">25:00</div>
+  <div class="foco-msg" id="focoMsg">Foque no que importa 🎯</div>
+  <div class="foco-controls">
+    <button class="btn-add" id="focoBtnStart" onclick="focoStart()">▶ Iniciar</button>
+    <button style="background:transparent;color:#fff;border-color:rgba(255,255,255,0.3)" onclick="focoReset()">↺ Reset</button>
+    <button style="background:transparent;color:#fff;border-color:rgba(255,255,255,0.3)" onclick="fecharFoco()">✕ Fechar</button>
+  </div>
+  <div style="font-size:13px;opacity:0.6;margin-bottom:12px">Ambiente sonoro:</div>
+  <div class="foco-musica">
+    <button class="btn-musica" onclick="tocarMusica('chuva')">🌧 Chuva</button>
+    <button class="btn-musica" onclick="tocarMusica('cafe')">☕ Café</button>
+    <button class="btn-musica" onclick="tocarMusica('natureza')">🌿 Natureza</button>
+    <button class="btn-musica" onclick="tocarMusica('silencio')">🔇 Silêncio</button>
+  </div>
+  <div style="margin-top:24px;font-size:13px;opacity:0.5" id="focoSessoes"></div>
+</div>
+
 <div id="screen-app" style="display:none">
 
   <div class="container">
@@ -39,6 +59,8 @@
         <h1>Portal de Produtividade</h1>
         <p id="userInfo" style="font-size:12px;color:#666;margin-top:2px"></p>
       </div>
+      <button class="btn-tema" id="btnTema" onclick="toggleTema()" title="Alternar tema">🌙</button>
+      <button class="btn-add" style="font-size:12px;padding:7px 14px" onclick="abrirFoco()">🎯 Foco</button>
       <button id="logoutBtn" class="btn-logout">Sair</button>
     </header>
 
