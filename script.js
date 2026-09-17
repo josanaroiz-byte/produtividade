@@ -1225,6 +1225,107 @@ function initDiary(){
 }
 
 /* ═══════════════════════════════════════
+   CLIMA (Open-Meteo — API gratuita, sem chave necessária)
+═══════════════════════════════════════ */
+const CLIMA_LAT = -23.0035; // Barra da Tijuca, Rio de Janeiro
+const CLIMA_LON = -43.3654;
+
+function climaInfo(code){
+  const mapa = {
+    0:['☀️','Céu limpo'], 1:['🌤','Poucas nuvens'], 2:['⛅','Parcialmente nublado'], 3:['☁️','Nublado'],
+    45:['🌫','Neblina'], 48:['🌫','Neblina com geada'],
+    51:['🌦','Garoa fraca'], 53:['🌦','Garoa moderada'], 55:['🌧','Garoa forte'],
+    56:['🌦','Garoa congelante fraca'], 57:['🌧','Garoa congelante forte'],
+    61:['🌦','Chuva fraca'], 63:['🌧','Chuva moderada'], 65:['🌧','Chuva forte'],
+    66:['🌧','Chuva congelante fraca'], 67:['🌧','Chuva congelante forte'],
+    71:['🌨','Neve fraca'], 73:['🌨','Neve moderada'], 75:['❄️','Neve forte'], 77:['🌨','Grãos de neve'],
+    80:['🌦','Pancadas de chuva fracas'], 81:['🌧','Pancadas de chuva moderadas'], 82:['⛈','Pancadas de chuva fortes'],
+    85:['🌨','Pancadas de neve fracas'], 86:['❄️','Pancadas de neve fortes'],
+    95:['⛈','Trovoada'], 96:['⛈','Trovoada com granizo fraco'], 99:['⛈','Trovoada com granizo forte'],
+  };
+  return mapa[code] || ['🌡','Condição desconhecida'];
+}
+
+async function carregarClima(){
+  const elIcon = document.getElementById('climaIcon');
+  const elTemp = document.getElementById('climaTemp');
+  const elDesc = document.getElementById('climaDesc');
+  const elDet  = document.getElementById('climaDetalhes');
+  if(!elIcon) return;
+  try{
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${CLIMA_LAT}&longitude=${CLIMA_LON}&current_weather=true&timezone=America%2FSao_Paulo`;
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('Falha na API de clima');
+    const data = await r.json();
+    const cw = data.current_weather;
+    const [icon, desc] = climaInfo(cw.weathercode);
+    elIcon.textContent = icon;
+    elTemp.textContent = `${Math.round(cw.temperature)}°C`;
+    elDesc.textContent = desc;
+    elDet.textContent  = `Vento: ${Math.round(cw.windspeed)} km/h`;
+  }catch(err){
+    console.error('Erro ao carregar clima:', err);
+    elIcon.textContent = '⚠️';
+    elTemp.textContent = '--°C';
+    elDesc.textContent = 'Não foi possível carregar o clima';
+    elDet.textContent  = '';
+  }
+}
+
+/* ═══════════════════════════════════════
+   REVISÃO DA SEMANA
+═══════════════════════════════════════ */
+function inicioSemana(offsetSemanas = 0){
+  const d = new Date();
+  const dia = d.getDay(); // 0 = domingo
+  const diffParaSegunda = (dia === 0 ? -6 : 1) - dia;
+  d.setDate(d.getDate() + diffParaSegunda + (offsetSemanas * 7));
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function renderRevisaoSemanal(){
+  const elGrid = document.getElementById('revisaoGrid');
+  if(!elGrid) return;
+
+  const inicioAtual    = inicioSemana(0);
+  const inicioAnterior = inicioSemana(-1);
+
+  Promise.all([
+    ref('todos').once('value'),
+    ref('habitos').once('value'),
+    ref('finances').once('value'),
+  ]).then(([sTodos, sHabitos, sFin])=>{
+    const todos    = objToArr(sTodos.val());
+    const habitos  = objToArr(sHabitos.val());
+    const finances = objToArr(sFin.val());
+
+    const tarefasEstaSemana = todos.filter(t=>t.createdAt >= inicioAtual).length;
+    const tarefasSemanaAnt  = todos.filter(t=>t.createdAt >= inicioAnterior && t.createdAt < inicioAtual).length;
+
+    const diasHabitosSemana = habitos.reduce((soma,h)=>soma + Math.min(h.streak || 0, 7), 0);
+
+    const saldoSemana    = finances.filter(f=>f.createdAt >= inicioAtual).reduce((s,f)=>s + f.val, 0);
+    const saldoSemanaAnt = finances.filter(f=>f.createdAt >= inicioAnterior && f.createdAt < inicioAtual).reduce((s,f)=>s + f.val, 0);
+
+    const setaTarefas = tarefasEstaSemana >= tarefasSemanaAnt ? '▲' : '▼';
+    const setaSaldo   = saldoSemana >= saldoSemanaAnt ? '▲' : '▼';
+
+    elGrid.innerHTML = [
+      { emoji:'📝', label:'Tarefas criadas',              val:tarefasEstaSemana,               comp:`${setaTarefas} vs ${tarefasSemanaAnt} sem. passada` },
+      { emoji:'🌱', label:'Dias de hábitos praticados',    val:diasHabitosSemana,               comp:'nos últimos 7 dias' },
+      { emoji:'💰', label:'Saldo da semana',               val:`${simbolo()} ${saldoSemana.toFixed(0)}`, comp:`${setaSaldo} vs ${simbolo()} ${saldoSemanaAnt.toFixed(0)} sem. passada` },
+    ].map(c=>`
+      <div class="hist-card">
+        <div style="font-size:20px;margin-bottom:4px">${c.emoji}</div>
+        <div class="hist-val">${c.val}</div>
+        <div class="hist-label">${c.label}</div>
+        <div style="font-size:11px;color:#999;margin-top:4px">${c.comp}</div>
+      </div>`).join('');
+  });
+}
+
+/* ═══════════════════════════════════════
    HISTÓRICO
 ═══════════════════════════════════════ */
 function renderHistorico(){
