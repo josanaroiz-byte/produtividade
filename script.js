@@ -699,15 +699,20 @@ function initTimer(){
 function initFinances(){
   const desc    = document.getElementById('finDesc');
   const val     = document.getElementById('finValue');
+  const tipoEl  = document.getElementById('finTipo');
   const addBtn  = document.getElementById('addFinBtn');
   const list    = document.getElementById('financeList');
   const empty   = document.getElementById('finEmpty');
   const balance = document.getElementById('balanceDisplay');
+  const elEntradas = document.getElementById('balanceEntradas');
+  const elSaidas    = document.getElementById('balanceSaidas');
 
   listen('finances', data => {
     const fins = objToArr(data).reverse();
     empty.style.display = fins.length?'none':'';
-    const total = fins.reduce((s,f)=>s+f.val,0);
+    const entradas = fins.filter(f=>f.val>=0).reduce((s,f)=>s+f.val,0);
+    const saidas   = fins.filter(f=>f.val<0).reduce((s,f)=>s+Math.abs(f.val),0);
+    const total    = entradas - saidas;
     list.innerHTML = fins.map(f=>`
       <div class="finance-item">
         <div>
@@ -719,6 +724,8 @@ function initFinances(){
           <button class="btn-danger" onclick="finDelete('${f._key}')">✕</button>
         </div>
       </div>`).join('');
+    if(elEntradas) elEntradas.textContent = `Entradas: ${simbolo()} ${entradas.toFixed(2)}`;
+    if(elSaidas)   elSaidas.textContent   = `Saídas: ${simbolo()} ${saidas.toFixed(2)}`;
     balance.textContent = `Saldo: ${simbolo()} ${total.toFixed(2)}`;
     balance.style.color = total<0?'#c0392b':'#1a7a4a';
   });
@@ -728,7 +735,9 @@ function initFinances(){
   function add(){
     const d=desc.value.trim(), v=parseFloat(val.value);
     if(!d||isNaN(v)){ notify('Preencha descrição e valor ⚠️'); return; }
-    push('finances',{desc:d,val:v,moeda:moedaAtual,createdAt:Date.now()});
+    const tipo = tipoEl ? tipoEl.value : 'entrada';
+    const valorComSinal = tipo==='saida' ? -Math.abs(v) : Math.abs(v);
+    push('finances',{desc:d,val:valorComSinal,tipo,moeda:moedaAtual,createdAt:Date.now()});
     desc.value=''; val.value=''; notify('Lançado ✓');
   }
   addBtn.addEventListener('click',add);
