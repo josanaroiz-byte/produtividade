@@ -1,22 +1,20 @@
 // script.js — Portal de Produtividade (com login Google + Firebase + Google Calendar)
 
 /* ═══════════════════════════════════════
-   CONFIGURAÇÃO
+   CONFIGURAÇÃO (vinda de /api/config, que lê as variáveis de ambiente na Vercel)
 ═══════════════════════════════════════ */
+if (typeof APP_CONFIG === 'undefined' || !APP_CONFIG.firebase || !APP_CONFIG.firebase.apiKey) {
+  document.write('<p style="padding:24px;font-family:sans-serif;color:#c00">⚠️ Erro de configuração: não foi possível carregar /api/config. Verifique se as variáveis de ambiente (FIREBASE_*, GCAL_*) estão definidas no projeto na Vercel.</p>');
+  throw new Error('APP_CONFIG ausente — verifique as variáveis de ambiente na Vercel.');
+}
 
+const GCAL_API_KEY   = APP_CONFIG.gcal.apiKey;
+const GCAL_CLIENT_ID = APP_CONFIG.gcal.clientId;
 
 /* ═══════════════════════════════════════
    FIREBASE INIT
 ═══════════════════════════════════════ */
-firebase.initializeApp({
-  apiKey:            "AIzaSyCvAV2ypyjNeoV-f2e5_NQWTSJmwf6NWqs",
-  authDomain:        "portal-produtividade.firebaseapp.com",
-  databaseURL:       "https://portal-produtividade-default-rtdb.firebaseio.com",
-  projectId:         "portal-produtividade",
-  storageBucket:     "portal-produtividade.firebasestorage.app",
-  messagingSenderId: "652975111490",
-  appId:             "1:652975111490:web:2d9f3b216a5b44a8819cdb"
-});
+firebase.initializeApp(APP_CONFIG.firebase);
 const auth = firebase.auth();
 const db   = firebase.database();
 let uid    = null;
