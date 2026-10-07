@@ -98,6 +98,10 @@ function falar(texto, { continuar = false, pergunta } = {}) {
   return { version: '1.0', response: resposta };
 }
 
+// Depois de cada ação, a conversa continua aberta
+const MAIS = 'Quer fazer mais alguma coisa?';
+const feito = texto => falar(`${texto} ${MAIS}`, { continuar: true, pergunta: MAIS });
+
 const semAcento = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 const slot = (intent, nome) => intent?.slots?.[nome]?.value?.trim();
 
@@ -106,21 +110,21 @@ async function anotarIdeia(intent) {
   const texto = slot(intent, 'texto');
   if (!texto) return falar('Qual é a ideia?', { continuar: true, pergunta: 'Diga: anota a ideia, e depois a ideia.' });
   await minhaRef('ideias').push({ texto, createdAt: Date.now() });
-  return falar(`Anotei a ideia: ${texto}.`);
+  return feito(`Anotei a ideia: ${texto}.`);
 }
 
 async function adicionarTarefa(intent) {
   const tarefa = slot(intent, 'tarefa');
   if (!tarefa) return falar('Qual é a tarefa?', { continuar: true, pergunta: 'Diga: adiciona a tarefa, e depois a tarefa.' });
   await minhaRef('todos').push({ text: tarefa, done: false, createdAt: Date.now() });
-  return falar(`Tarefa adicionada: ${tarefa}.`);
+  return feito(`Tarefa adicionada: ${tarefa}.`);
 }
 
 async function marcarHabito(intent) {
   const pedido = semAcento(slot(intent, 'habito'));
   const snap = await minhaRef('habitos').once('value');
   const habitos = Object.entries(snap.val() || {}).map(([k, h]) => ({ k, ...h }));
-  if (!habitos.length) return falar('Você ainda não tem hábitos cadastrados no portal.');
+  if (!habitos.length) return falar('Você ainda não tem hábitos cadastrados. Diga: cria o hábito, e o nome do hábito.', { continuar: true, pergunta: MAIS });
 
   const nomes = habitos.map(h => h.texto).join(', ');
   if (!pedido) return falar(`Qual hábito? Seus hábitos são: ${nomes}.`, { continuar: true, pergunta: 'Qual hábito você quer marcar?' });
@@ -130,14 +134,27 @@ async function marcarHabito(intent) {
   if (!achado) return falar(`Não encontrei esse hábito. Seus hábitos são: ${nomes}.`, { continuar: true, pergunta: 'Qual hábito você quer marcar?' });
 
   const hoje = todayKey();
-  if (achado.lastDone === hoje) return falar(`${achado.texto} já está marcado hoje. Sequência de ${achado.streak || 0} dias.`);
+  if (achado.lastDone === hoje) return feito(`${achado.texto} já está marcado hoje. Sequência de ${achado.streak || 0} dias.`);
 
   const streak = achado.lastDone === todayKey(-1) ? (achado.streak || 0) + 1 : 1;
   await minhaRef(`habitos/${achado.k}`).update({ lastDone: hoje, streak });
-  return falar(`Marquei ${achado.texto}. Sequência de ${streak} ${streak === 1 ? 'dia' : 'dias'}!`);
+  return feito(`Marquei ${achado.texto}. Sequência de ${streak} ${streak === 1 ? 'dia' : 'dias'}!`);
 }
 
-const AJUDA = 'Você pode dizer: anota a ideia, adiciona a tarefa, ou marca o hábito, seguido do que quiser.';
+async function criarHabito(intent) {
+  let nome = slot(intent, 'habito');
+  if (!nome) return falar('Qual hábito você quer criar?', { continuar: true, pergunta: 'Diga: cria o hábito, e o nome do hábito.' });
+  nome = nome.charAt(0).toUpperCase() + nome.slice(1);
+
+  const snap = await minhaRef('habitos').once('value');
+  const jaExiste = Object.values(snap.val() || {}).find(h => semAcento(h.texto) === semAcento(nome));
+  if (jaExiste) return feito(`Você já tem o hábito ${jaExiste.texto}.`);
+
+  await minhaRef('habitos').push({ texto: nome, streak: 0, lastDone: '' }); // mesmo formato do portal
+  return feito(`Hábito criado: ${nome}.`);
+}
+
+const AJUDA = 'Você pode dizer: anota a ideia, adiciona a tarefa, cria o hábito, ou marca o hábito, seguido do que quiser.';
 
 // ---------- Entrada principal ----------
 export default async function handler(req, res) {
@@ -162,7 +179,10 @@ export default async function handler(req, res) {
         case 'AnotarIdeiaIntent':     resposta = await anotarIdeia(intent); break;
         case 'AdicionarTarefaIntent': resposta = await adicionarTarefa(intent); break;
         case 'MarcarHabitoIntent':    resposta = await marcarHabito(intent); break;
+        case 'CriarHabitoIntent':     resposta = await criarHabito(intent); break;
+        case 'AMAZON.YesIntent':      resposta = falar(`Pode falar. ${AJUDA}`, { continuar: true, pergunta: AJUDA }); break;
         case 'AMAZON.HelpIntent':     resposta = falar(AJUDA, { continuar: true, pergunta: AJUDA }); break;
+        case 'AMAZON.NoIntent':
         case 'AMAZON.StopIntent':
         case 'AMAZON.CancelIntent':   resposta = falar('Até logo!'); break;
         default:                      resposta = falar(`Não entendi. ${AJUDA}`, { continuar: true, pergunta: AJUDA });
