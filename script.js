@@ -1061,13 +1061,23 @@ async function buscarEMostrarGoogleAgenda(){
   const fmtDia  = new Intl.DateTimeFormat('pt-BR', { weekday:'long', day:'numeric', month:'long', timeZone:'America/Sao_Paulo' });
   const fmtHora = new Intl.DateTimeFormat('pt-BR', { hour:'2-digit', minute:'2-digit', timeZone:'America/Sao_Paulo' });
   const grupos  = {};
+  const chaveDia = d => d.toLocaleDateString('en-CA', { timeZone:'America/Sao_Paulo' }); // AAAA-MM-DD
+  const hojeChave = chaveDia(new Date());
   for(const ev of itens){
     const diaInteiro = !ev.start.dateTime;
     const ini  = new Date(ev.start.dateTime || ev.start.date + 'T12:00:00');
-    const dia  = fmtDia.format(ini);
+    // Fim: em eventos de dia inteiro o Google manda o dia SEGUINTE ao último — volta 1 dia
+    let fimEv = new Date(ev.end.dateTime || ev.end.date + 'T12:00:00');
+    if(diaInteiro) fimEv.setDate(fimEv.getDate() - 1);
+
+    const comecouAntes = chaveDia(ini) < hojeChave;          // já estava em andamento
+    const variosDias   = chaveDia(fimEv) > chaveDia(ini);    // termina em outro dia
+    const dia  = fmtDia.format(comecouAntes ? new Date() : ini);
+    const ate  = variosDias ? ` · até dia ${fimEv.toLocaleDateString('pt-BR', { day:'numeric', timeZone:'America/Sao_Paulo' })}` : '';
+
     (grupos[dia] = grupos[dia] || []).push({
-      hora:  diaInteiro ? 'Dia todo' : fmtHora.format(ini),
-      nome:  ev.summary || '(sem título)',
+      hora:  diaInteiro ? 'Dia todo' : (comecouAntes ? 'Em curso' : fmtHora.format(ini)),
+      nome:  (ev.summary || '(sem título)') + ate,
       local: ev.location || (ev.hangoutLink ? 'Google Meet' : ''),
       link:  ev.htmlLink
     });
