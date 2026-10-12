@@ -1034,73 +1034,94 @@ async function sincronizarCalendar(){
 }
 
 /* Lê os próximos 7 dias do Google Agenda e mostra em #gcalView */
-async function lerGoogleAgenda(){
+async function buscarEMostrarGoogleAgenda(){
+  const view = document.getElementById('gcalView');
+  view.innerHTML = '<p class="empty-msg">Carregando seu Google Agenda…</p>';
+
+  const inicio = new Date(); inicio.setHours(0,0,0,0);
+  const fim    = new Date(inicio); fim.setDate(fim.getDate() + 7);
+
+  const r = await gapi.client.calendar.events.list({
+    calendarId:   'primary',
+    timeMin:      inicio.toISOString(),
+    timeMax:      fim.toISOString(),
+    singleEvents: true,
+    orderBy:      'startTime',
+    maxResults:   100
+  });
+  const itens = r.result.items || [];
+  console.log('[agenda] eventos recebidos:', itens.length);
+
+  if(!itens.length){
+    view.innerHTML = '<p class="empty-msg">Nada no Google Agenda nos próximos 7 dias.</p>';
+    notify('Google Agenda vazio nos próximos 7 dias');
+    return;
+  }
+
+  const fmtDia  = new Intl.DateTimeFormat('pt-BR', { weekday:'long', day:'numeric', month:'long', timeZone:'America/Sao_Paulo' });
+  const fmtHora = new Intl.DateTimeFormat('pt-BR', { hour:'2-digit', minute:'2-digit', timeZone:'America/Sao_Paulo' });
+  const grupos  = {};
+  for(const ev of itens){
+    const diaInteiro = !ev.start.dateTime;
+    const ini  = new Date(ev.start.dateTime || ev.start.date + 'T12:00:00');
+    const dia  = fmtDia.format(ini);
+    (grupos[dia] = grupos[dia] || []).push({
+      hora:  diaInteiro ? 'Dia todo' : fmtHora.format(ini),
+      nome:  ev.summary || '(sem título)',
+      local: ev.location || (ev.hangoutLink ? 'Google Meet' : ''),
+      link:  ev.htmlLink
+    });
+  }
+
+  view.innerHTML = Object.entries(grupos).map(([dia, evts]) => `
+    <div class="agenda-day">
+      <div class="agenda-day-title">🗓 ${esc(dia.charAt(0).toUpperCase() + dia.slice(1))} · Google</div>
+      ${evts.map(e => `
+        <div class="agenda-event">
+          <span class="evt-time">${esc(e.hora)}</span>
+          <span class="evt-name">${esc(e.nome)}${e.local ? ` <small style="opacity:.6">· ${esc(e.local)}</small>` : ''}</span>
+          <a href="${e.link}" target="_blank" rel="noopener" style="font-size:12px">abrir</a>
+        </div>`).join('')}
+    </div>`).join('');
+
+  notify(`✅ ${itens.length} evento(s) do Google Agenda`);
+}
+
+function lerGoogleAgenda(){
+  console.log('[agenda] botão clicado | gapi:', window._gapiReady, '| login:', window._gisReady, '| token:', !!(window.gapi && gapi.client && gapi.client.getToken()));
   if(!window._gapiReady || !window._gisReady){
     notify('Aguarde o carregamento do Google... tente novamente em alguns segundos.');
     return;
   }
   const view = document.getElementById('gcalView');
 
-  window._tokenClient.callback = async resp => {
-    if(resp.error){ notify('Erro ao autenticar com o Google ⚠️'); return; }
-    try {
-      view.innerHTML = '<p class="empty-msg">Carregando seu Google Agenda…</p>';
-
-      const inicio = new Date(); inicio.setHours(0,0,0,0);
-      const fim    = new Date(inicio); fim.setDate(fim.getDate() + 7);
-
-      const r = await gapi.client.calendar.events.list({
-        calendarId:   'primary',
-        timeMin:      inicio.toISOString(),
-        timeMax:      fim.toISOString(),
-        singleEvents: true,          // abre os eventos recorrentes em ocorrências
-        orderBy:      'startTime',
-        maxResults:   100
-      });
-      const itens = r.result.items || [];
-
-      if(!itens.length){
-        view.innerHTML = '<p class="empty-msg">Nada no Google Agenda nos próximos 7 dias.</p>';
-        return;
-      }
-
-      // Agrupa por dia
-      const fmtDia  = new Intl.DateTimeFormat('pt-BR', { weekday:'long', day:'numeric', month:'long', timeZone:'America/Sao_Paulo' });
-      const fmtHora = new Intl.DateTimeFormat('pt-BR', { hour:'2-digit', minute:'2-digit', timeZone:'America/Sao_Paulo' });
-      const grupos  = {};
-      for(const ev of itens){
-        const diaInteiro = !ev.start.dateTime;
-        const ini  = new Date(ev.start.dateTime || ev.start.date + 'T12:00:00');
-        const dia  = fmtDia.format(ini);
-        (grupos[dia] = grupos[dia] || []).push({
-          hora:  diaInteiro ? 'Dia todo' : fmtHora.format(ini),
-          nome:  ev.summary || '(sem título)',
-          local: ev.location || (ev.hangoutLink ? 'Google Meet' : ''),
-          link:  ev.htmlLink
-        });
-      }
-
-      view.innerHTML = Object.entries(grupos).map(([dia, evts]) => `
-        <div class="agenda-day">
-          <div class="agenda-day-title">🗓 ${esc(dia.charAt(0).toUpperCase() + dia.slice(1))} · Google</div>
-          ${evts.map(e => `
-            <div class="agenda-event">
-              <span class="evt-time">${esc(e.hora)}</span>
-              <span class="evt-name">${esc(e.nome)}${e.local ? ` <small style="opacity:.6">· ${esc(e.local)}</small>` : ''}</span>
-              <a href="${e.link}" target="_blank" rel="noopener" style="font-size:12px">abrir</a>
-            </div>`).join('')}
-        </div>`).join('');
-
-      notify(`✅ ${itens.length} evento(s) do Google Agenda`);
-    } catch(err){
-      console.error('Erro ao ler o Google Agenda:', err);
-      view.innerHTML = '';
+  const tentar = () => buscarEMostrarGoogleAgenda().catch(err => {
+    console.error('[agenda] erro ao ler:', err && err.status, err && err.result && err.result.error ? err.result.error.message : err);
+    view.innerHTML = '';
+    if(err && (err.status === 401 || err.status === 403 || err.status === 404)){
+      gapi.client.setToken(null);
+      notify('Permissão do Google expirou. Toque de novo em "Ver meu Google Agenda".');
+    } else {
       notify('Não consegui ler o Google Agenda. Tente de novo. ⚠️');
     }
-  };
+  });
 
-  // Mesmo padrão do sincronizarCalendar: só pede consentimento na primeira vez
-  window._tokenClient.requestAccessToken({ prompt: gapi.client.getToken() ? '' : 'consent' });
+  // Já tem permissão nesta sessão: lê direto, sem abrir janela
+  if(gapi.client.getToken()){ tentar(); return; }
+
+  // Sem permissão: abre a janela do Google
+  notify('Abrindo o Google para pedir permissão…', 4000);
+  window._tokenClient.callback = resp => {
+    console.log('[agenda] resposta do Google:', resp);
+    if(resp.error){ notify('O Google não deu permissão: ' + resp.error + ' ⚠️', 4000); return; }
+    tentar();
+  };
+  try {
+    window._tokenClient.requestAccessToken({ prompt: '' });
+  } catch(err){
+    console.error('[agenda] não abriu a janela do Google:', err);
+    notify('Não consegui abrir a janela do Google. Libere pop-ups para este site. ⚠️', 4000);
+  }
 }
 
 /* ═══════════════════════════════════════
