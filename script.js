@@ -930,6 +930,7 @@ function initAgenda(){
   eventoEl.addEventListener('keydown',e=>{ if(e.key==='Enter') add(); });
 
   syncBtn.addEventListener('click', sincronizarCalendar);
+  document.getElementById('lerCalBtn').addEventListener('click', lerGoogleAgenda);
 }
 
 async function sincronizarCalendar(){
@@ -1030,6 +1031,76 @@ async function sincronizarCalendar(){
       window._tokenClient.requestAccessToken({ prompt: '' });
     }
   });
+}
+
+/* Lê os próximos 7 dias do Google Agenda e mostra em #gcalView */
+async function lerGoogleAgenda(){
+  if(!window._gapiReady || !window._gisReady){
+    notify('Aguarde o carregamento do Google... tente novamente em alguns segundos.');
+    return;
+  }
+  const view = document.getElementById('gcalView');
+
+  window._tokenClient.callback = async resp => {
+    if(resp.error){ notify('Erro ao autenticar com o Google ⚠️'); return; }
+    try {
+      view.innerHTML = '<p class="empty-msg">Carregando seu Google Agenda…</p>';
+
+      const inicio = new Date(); inicio.setHours(0,0,0,0);
+      const fim    = new Date(inicio); fim.setDate(fim.getDate() + 7);
+
+      const r = await gapi.client.calendar.events.list({
+        calendarId:   'primary',
+        timeMin:      inicio.toISOString(),
+        timeMax:      fim.toISOString(),
+        singleEvents: true,          // abre os eventos recorrentes em ocorrências
+        orderBy:      'startTime',
+        maxResults:   100
+      });
+      const itens = r.result.items || [];
+
+      if(!itens.length){
+        view.innerHTML = '<p class="empty-msg">Nada no Google Agenda nos próximos 7 dias.</p>';
+        return;
+      }
+
+      // Agrupa por dia
+      const fmtDia  = new Intl.DateTimeFormat('pt-BR', { weekday:'long', day:'numeric', month:'long', timeZone:'America/Sao_Paulo' });
+      const fmtHora = new Intl.DateTimeFormat('pt-BR', { hour:'2-digit', minute:'2-digit', timeZone:'America/Sao_Paulo' });
+      const grupos  = {};
+      for(const ev of itens){
+        const diaInteiro = !ev.start.dateTime;
+        const ini  = new Date(ev.start.dateTime || ev.start.date + 'T12:00:00');
+        const dia  = fmtDia.format(ini);
+        (grupos[dia] = grupos[dia] || []).push({
+          hora:  diaInteiro ? 'Dia todo' : fmtHora.format(ini),
+          nome:  ev.summary || '(sem título)',
+          local: ev.location || (ev.hangoutLink ? 'Google Meet' : ''),
+          link:  ev.htmlLink
+        });
+      }
+
+      view.innerHTML = Object.entries(grupos).map(([dia, evts]) => `
+        <div class="agenda-day">
+          <div class="agenda-day-title">🗓 ${esc(dia.charAt(0).toUpperCase() + dia.slice(1))} · Google</div>
+          ${evts.map(e => `
+            <div class="agenda-event">
+              <span class="evt-time">${esc(e.hora)}</span>
+              <span class="evt-name">${esc(e.nome)}${e.local ? ` <small style="opacity:.6">· ${esc(e.local)}</small>` : ''}</span>
+              <a href="${e.link}" target="_blank" rel="noopener" style="font-size:12px">abrir</a>
+            </div>`).join('')}
+        </div>`).join('');
+
+      notify(`✅ ${itens.length} evento(s) do Google Agenda`);
+    } catch(err){
+      console.error('Erro ao ler o Google Agenda:', err);
+      view.innerHTML = '';
+      notify('Não consegui ler o Google Agenda. Tente de novo. ⚠️');
+    }
+  };
+
+  // Mesmo padrão do sincronizarCalendar: só pede consentimento na primeira vez
+  window._tokenClient.requestAccessToken({ prompt: gapi.client.getToken() ? '' : 'consent' });
 }
 
 /* ═══════════════════════════════════════
