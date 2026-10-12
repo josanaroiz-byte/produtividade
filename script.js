@@ -930,107 +930,64 @@ function initAgenda(){
   eventoEl.addEventListener('keydown',e=>{ if(e.key==='Enter') add(); });
 
   syncBtn.addEventListener('click', sincronizarCalendar);
-  document.getElementById('lerCalBtn').addEventListener('click', lerGoogleAgenda);
 }
 
-async function sincronizarCalendar(){
-  if(!window._gapiReady || !window._gisReady){
-    notify('Aguarde o carregamento do Google... tente novamente em alguns segundos.');
-    return;
-  }
+/* Envia ao Google só os eventos do portal que ainda não foram enviados.
+   Cada evento enviado ganha "gcalId" no Firebase, então nunca duplica. */
+async function enviarEventosDoPortal(){
+  const snap    = await ref('agenda').once('value');
+  const eventos = objToArr(snap.val() || {}).filter(e => !e.gcalId);
+  if(!eventos.length) return 0;
 
-  return new Promise(resolve => {
-    window._tokenClient.callback = async resp => {
-      if(resp.error){
-        notify('Erro ao autenticar com o Google ⚠️');
-        resolve();
-        return;
+  const diasSemana = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  const rruleMap = { diaria:'RRULE:FREQ=DAILY', semanal:'RRULE:FREQ=WEEKLY', quinzenal:'RRULE:FREQ=WEEKLY;INTERVAL=2', mensal:'RRULE:FREQ=MONTHLY' };
+  const recLabel = { diaria:'Diária', semanal:'Semanal', quinzenal:'Quinzenal', mensal:'Mensal', unica:'Única vez' };
+  let novos = 0;
+
+  for(const e of eventos){
+    try {
+      const titulo = `📅 ${e.nome}`;
+
+      // Evento já enviado antes desta versão? Procura no Google pelo mesmo título e só anota o id.
+      const busca = await gapi.client.calendar.events.list({
+        calendarId: 'primary', q: e.nome, singleEvents: false, maxResults: 20,
+        timeMin: new Date(Date.now() - 30*86400000).toISOString()
+      });
+      const existente = (busca.result.items || []).find(g => g.summary === titulo);
+      if(existente){
+        await ref(`agenda/${e._key}`).update({ gcalId: existente.id });
+        continue;
       }
 
-      try {
-        const snap    = await ref('agenda').once('value');
-        const eventos = objToArr(snap.val() || {});
-
-        if(!eventos.length){
-          notify('Nenhum evento para sincronizar.');
-          resolve();
-          return;
-        }
-
-        notify(`Sincronizando ${eventos.length} evento(s)...`);
-        let ok = 0, erros = 0;
-
-        for(const e of eventos){
-          try {
-            // Calcula a próxima data do dia da semana escolhido
-            const diasSemana = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
-            const diaIdx     = diasSemana.indexOf(e.dia); // 0=Dom, 1=Seg...
-            const hoje       = new Date();
-            const hojeIdx    = hoje.getDay(); // 0=Dom
-            let diff         = diaIdx - hojeIdx;
-            if(diff <= 0) diff += 7;
-            const proxData   = new Date(hoje);
-            proxData.setDate(hoje.getDate() + diff);
-            const ds         = proxData.toISOString().slice(0, 10);
-
-            // Monta horários
-            const [hh, mm]   = e.hora.split(':').map(Number);
-            const hhFim      = String(hh + 1).padStart(2, '0');
-            const mmStr      = String(mm).padStart(2, '0');
-            const dtStart    = `${ds}T${String(hh).padStart(2,'0')}:${mmStr}:00`;
-            const dtEnd      = `${ds}T${hhFim}:${mmStr}:00`;
-
-            // Regra de recorrência
-            const rruleMap = {
-              diaria:    'RRULE:FREQ=DAILY',
-              semanal:   'RRULE:FREQ=WEEKLY',
-              quinzenal: 'RRULE:FREQ=WEEKLY;INTERVAL=2',
-              mensal:    'RRULE:FREQ=MONTHLY',
-            };
-            const recurrence = rruleMap[e.recorrencia] ? [rruleMap[e.recorrencia]] : [];
-
-            const recLabel = {
-              diaria:'Diária', semanal:'Semanal',
-              quinzenal:'Quinzenal', mensal:'Mensal', unica:'Única vez'
-            };
-
-            await gapi.client.calendar.events.insert({
-              calendarId: 'primary',
-              resource: {
-                summary:     `📅 ${e.nome}`,
-                description: `Recorrência: ${recLabel[e.recorrencia] || 'Única vez'}\nAdicionado pelo Portal de Produtividade`,
-                start: { dateTime: dtStart, timeZone: 'America/Sao_Paulo' },
-                end:   { dateTime: dtEnd,   timeZone: 'America/Sao_Paulo' },
-                recurrence
-              }
-            });
-            ok++;
-          } catch(err){
-            console.error('Erro ao criar evento:', e.nome, err);
-            erros++;
-          }
-        }
-
-        if(erros > 0){
-          notify(`${ok} evento(s) sincronizados, ${erros} com erro. Verifique o console.`);
-        } else {
-          notify(`✅ ${ok} evento(s) adicionados ao Google Calendar!`);
-        }
-      } catch(err){
-        console.error('Erro geral:', err);
-        notify('Erro ao sincronizar. Tente novamente. ⚠️');
+      // Data: usa a data escolhida, se houver; senão o próximo dia da semana escolhido
+      let ds = e.data;
+      if(!ds){
+        const hoje = new Date();
+        let diff = diasSemana.indexOf(e.dia) - hoje.getDay();
+        if(diff < 0) diff += 7;
+        const prox = new Date(hoje); prox.setDate(hoje.getDate() + diff);
+        ds = prox.toLocaleDateString('en-CA', { timeZone:'America/Sao_Paulo' });
       }
+      const [hh, mm] = (e.hora || '09:00').split(':').map(Number);
+      const p2 = n => String(n).padStart(2,'0');
 
-      resolve();
-    };
-
-    // Solicita token — se já tem token válido não pede login de novo
-    if(!gapi.client.getToken()){
-      window._tokenClient.requestAccessToken({ prompt: 'consent' });
-    } else {
-      window._tokenClient.requestAccessToken({ prompt: '' });
+      const r = await gapi.client.calendar.events.insert({
+        calendarId: 'primary',
+        resource: {
+          summary:     titulo,
+          description: `Recorrência: ${recLabel[e.recorrencia] || 'Única vez'}\nAdicionado pelo Portal de Produtividade`,
+          start: { dateTime: `${ds}T${p2(hh)}:${p2(mm)}:00`,              timeZone: 'America/Sao_Paulo' },
+          end:   { dateTime: `${ds}T${p2(Math.min(hh+1,23))}:${p2(mm)}:00`, timeZone: 'America/Sao_Paulo' },
+          recurrence: rruleMap[e.recorrencia] ? [rruleMap[e.recorrencia]] : []
+        }
+      });
+      await ref(`agenda/${e._key}`).update({ gcalId: r.result.id });
+      novos++;
+    } catch(err){
+      console.error('[agenda] erro ao enviar', e.nome, err);
     }
-  });
+  }
+  return novos;
 }
 
 /* Lê os próximos 7 dias do Google Agenda e mostra em #gcalView */
@@ -1097,34 +1054,41 @@ async function buscarEMostrarGoogleAgenda(){
   notify(`✅ ${itens.length} evento(s) do Google Agenda`);
 }
 
-function lerGoogleAgenda(){
-  console.log('[agenda] botão clicado | gapi:', window._gapiReady, '| login:', window._gisReady, '| token:', !!(window.gapi && gapi.client && gapi.client.getToken()));
+/* Botão único: envia o que é novo no portal e depois mostra o Google Agenda */
+function sincronizarCalendar(){
   if(!window._gapiReady || !window._gisReady){
     notify('Aguarde o carregamento do Google... tente novamente em alguns segundos.');
     return;
   }
+  const btn  = document.getElementById('syncCalBtn');
   const view = document.getElementById('gcalView');
 
-  const tentar = () => buscarEMostrarGoogleAgenda().catch(err => {
-    console.error('[agenda] erro ao ler:', err && err.status, err && err.result && err.result.error ? err.result.error.message : err);
-    view.innerHTML = '';
-    if(err && (err.status === 401 || err.status === 403 || err.status === 404)){
-      gapi.client.setToken(null);
-      notify('Permissão do Google expirou. Toque de novo em "Ver meu Google Agenda".');
-    } else {
-      notify('Não consegui ler o Google Agenda. Tente de novo. ⚠️');
+  const executar = async () => {
+    btn.disabled = true;
+    try {
+      const novos = await enviarEventosDoPortal();
+      if(novos) notify(`✅ ${novos} evento(s) novo(s) enviados ao Google`);
+      await buscarEMostrarGoogleAgenda();
+    } catch(err){
+      console.error('[agenda] erro:', err && err.status, err && err.result && err.result.error ? err.result.error.message : err);
+      view.innerHTML = '';
+      if(err && (err.status === 401 || err.status === 403 || err.status === 404)){
+        gapi.client.setToken(null);
+        notify('Permissão do Google expirou. Toque de novo em "Sincronizar".', 4000);
+      } else {
+        notify('Não consegui falar com o Google Agenda. Tente de novo. ⚠️');
+      }
+    } finally {
+      btn.disabled = false;
     }
-  });
+  };
 
-  // Já tem permissão nesta sessão: lê direto, sem abrir janela
-  if(gapi.client.getToken()){ tentar(); return; }
+  if(gapi.client.getToken()){ executar(); return; }
 
-  // Sem permissão: abre a janela do Google
   notify('Abrindo o Google para pedir permissão…', 4000);
   window._tokenClient.callback = resp => {
-    console.log('[agenda] resposta do Google:', resp);
     if(resp.error){ notify('O Google não deu permissão: ' + resp.error + ' ⚠️', 4000); return; }
-    tentar();
+    executar();
   };
   try {
     window._tokenClient.requestAccessToken({ prompt: '' });
