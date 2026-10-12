@@ -154,7 +154,72 @@ async function criarHabito(intent) {
   return feito(`Hábito criado: ${nome}.`);
 }
 
-const AJUDA = 'Você pode dizer: anota a ideia, adiciona a tarefa, cria o hábito, ou marca o hábito, seguido do que quiser.';
+// ---------- Google Agenda (leitura) ----------
+// Usa uma permissão permanente (refresh token) guardada nas variáveis do Vercel:
+// GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN
+async function tokenGoogle() {
+  const r = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id:     process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+      grant_type:    'refresh_token',
+    }),
+  });
+  const j = await r.json();
+  if (!j.access_token) throw new Error('Google recusou o token: ' + JSON.stringify(j));
+  return j.access_token;
+}
+
+// Data AAAA-MM-DD no fuso de São Paulo
+const dataSP = (offsetDias = 0) => {
+  const d = new Date(Date.now() + offsetDias * 86400000);
+  return d.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+};
+
+function horaFalada(iso) {
+  const [h, m] = new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }).split(':').map(Number);
+  return m ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
+}
+
+// Tira emojis e símbolos do começo do título (ex.: "📅 Dentista" → "Dentista")
+const limparTitulo = t => (t || 'sem título').replace(/^[^\p{L}\p{N}]+/u, '').trim() || 'sem título';
+
+async function consultarAgenda(intent) {
+  // {dia} é um slot AMAZON.DATE: "hoje", "amanhã", "sexta"... Sem dia = hoje.
+  let dia = slot(intent, 'dia');
+  if (!dia || !/^\d{4}-\d{2}-\d{2}$/.test(dia)) dia = dataSP(0);
+
+  const nomeDia = dia === dataSP(0) ? 'Hoje' : dia === dataSP(1) ? 'Amanhã'
+    : new Date(dia + 'T12:00:00-03:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' });
+
+  const token = await tokenGoogle();
+  const params = new URLSearchParams({
+    timeMin: `${dia}T00:00:00-03:00`,
+    timeMax: `${dia}T23:59:59-03:00`,
+    singleEvents: 'true',
+    orderBy: 'startTime',
+    maxResults: '20',
+    timeZone: 'America/Sao_Paulo',
+  });
+  const r = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!r.ok) throw new Error('Erro do Google Agenda: ' + r.status + ' ' + await r.text());
+  const itens = ((await r.json()).items || []).filter(e => e.status !== 'cancelled');
+
+  if (!itens.length) return feito(`${nomeDia} sua agenda está livre.`);
+
+  const partes = itens.map(e => e.start.dateTime
+    ? `às ${horaFalada(e.start.dateTime)}, ${limparTitulo(e.summary)}`
+    : `o dia todo, ${limparTitulo(e.summary)}`);
+  const n = itens.length;
+  return feito(`${nomeDia} você tem ${n} ${n === 1 ? 'compromisso' : 'compromissos'}: ${partes.join('; ')}.`);
+}
+
+const AJUDA = 'Você pode dizer: o que tenho na agenda hoje, anota a ideia, adiciona a tarefa, cria o hábito, ou marca o hábito, seguido do que quiser.';
 
 // ---------- Entrada principal ----------
 export default async function handler(req, res) {
@@ -180,6 +245,7 @@ export default async function handler(req, res) {
         case 'AdicionarTarefaIntent': resposta = await adicionarTarefa(intent); break;
         case 'MarcarHabitoIntent':    resposta = await marcarHabito(intent); break;
         case 'CriarHabitoIntent':     resposta = await criarHabito(intent); break;
+        case 'ConsultarAgendaIntent': resposta = await consultarAgenda(intent); break;
         case 'AMAZON.YesIntent':      resposta = falar(`Pode falar. ${AJUDA}`, { continuar: true, pergunta: AJUDA }); break;
         case 'AMAZON.HelpIntent':     resposta = falar(AJUDA, { continuar: true, pergunta: AJUDA }); break;
         case 'AMAZON.NoIntent':
