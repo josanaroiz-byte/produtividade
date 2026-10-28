@@ -1,4 +1,4 @@
-// Ponte entre a habilidade "meu portal" da Alexa e o Portal de Produtividade.
+// Ponte entre a habilidade "meu caderno" da Alexa e o Meu Caderno.
 // Grava SOMENTE no usuário definido em ALEXA_USER_UID. Os demais usuários não são afetados.
 
 import crypto from 'node:crypto';
@@ -237,7 +237,7 @@ export default async function handler(req, res) {
     let resposta;
 
     if (pedido.type === 'LaunchRequest') {
-      resposta = falar(`Oi, Josana! Seu portal está aberto. ${AJUDA}`, { continuar: true, pergunta: AJUDA });
+      resposta = falar(`Oi, Josana! Seu caderno está aberto. ${AJUDA}`, { continuar: true, pergunta: AJUDA });
     } else if (pedido.type === 'IntentRequest') {
       const intent = pedido.intent;
       switch (intent.name) {
@@ -259,6 +259,6 @@ export default async function handler(req, res) {
     return res.status(200).json(resposta);
   } catch (erro) {
     console.error('Erro na Alexa:', erro);
-    return res.status(200).json(falar('Desculpe, algo deu errado no portal. Tente de novo em instantes.'));
+    return res.status(200).json(falar('Desculpe, algo deu errado no caderno. Tente de novo em instantes.'));
   }
 }
