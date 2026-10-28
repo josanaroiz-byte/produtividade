@@ -1,4 +1,4 @@
-// script.js — Portal de Produtividade (com login Google + Firebase + Google Calendar)
+// script.js — Meu Caderno (com login Google + Firebase + Google Calendar)
 
 /* ═══════════════════════════════════════
    CONFIGURAÇÃO (vinda de /api/config, que lê as variáveis de ambiente na Vercel)
@@ -975,7 +975,7 @@ async function enviarEventosDoPortal(){
         calendarId: 'primary',
         resource: {
           summary:     titulo,
-          description: `Recorrência: ${recLabel[e.recorrencia] || 'Única vez'}\nAdicionado pelo Portal de Produtividade`,
+          description: `Recorrência: ${recLabel[e.recorrencia] || 'Única vez'}\nAdicionado pelo Meu Caderno`,
           start: { dateTime: `${ds}T${p2(hh)}:${p2(mm)}:00`,              timeZone: 'America/Sao_Paulo' },
           end:   { dateTime: `${ds}T${p2(Math.min(hh+1,23))}:${p2(mm)}:00`, timeZone: 'America/Sao_Paulo' },
           recurrence: rruleMap[e.recorrencia] ? [rruleMap[e.recorrencia]] : []
