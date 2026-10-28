@@ -1,13 +1,13 @@
 {
-  "name": "PRODUTIVIDADE",
-  "short_name": "PRODUTIVIDADE",
+  "name": "Meu Caderno",
+  "short_name": "Meu Caderno",
   "lang": "pt-BR",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0a1f44",
-  "theme_color": "#0a1f44",
+  "background_color": "#14523a",
+  "theme_color": "#14523a",
   "icons": [
     {
       "src": "icone-192.png",
