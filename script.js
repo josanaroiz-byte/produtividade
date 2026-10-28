@@ -541,7 +541,7 @@ function initDiaCard(){
 
     container.innerHTML = exibir.map(t=>`
       <div class="dia-tarefa-item">
-        <input type="checkbox" style="width:14px;height:14px;cursor:pointer;accent-color:#FF6B1A" onchange="todoToggle('${t._key}',${!t.done})">
+        <input type="checkbox" style="width:14px;height:14px;cursor:pointer;accent-color:#8fd3ff" onchange="todoToggle('${t._key}',${!t.done})">
         <span>${esc(t.text)}</span>
         ${t.subs ? `<span style="font-size:10px;opacity:0.7;margin-left:auto">${Object.values(t.subs||{}).filter(s=>s.done).length}/${Object.keys(t.subs||{}).length} sub-itens</span>` : ''}
       </div>`).join('') +
@@ -799,7 +799,7 @@ window.renderCategChart = function(lancamentos){
     totals[cat]=(totals[cat]||0)+Math.abs(parseFloat(c.val));
   });
   const labels=Object.keys(totals), data=Object.values(totals);
-  const colors=['#0d1f3c','#FF6B1A','#2a9d8f','#e9c46a','#e76f51','#264653','#a8dadc','#457b9d'];
+  const colors=['#14523a','#2d5bc4','#2a9d8f','#e9c46a','#e76f51','#264653','#a8dadc','#457b9d'];
   if(categChartInst) categChartInst.destroy();
   if(!labels.length){ canvas.style.display='none'; return; }
   canvas.style.display='block';
@@ -1447,7 +1447,7 @@ function renderHistorico(){
           ${habitos.length ? habitos.map(h=>`
             <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:14px;color:#000">
               <span>${esc(h.texto)}</span>
-              <span style="color:#FF6B1A;font-weight:700">🔥 ${h.streak||0} dias</span>
+              <span style="color:#2d5bc4;font-weight:700">🔥 ${h.streak||0} dias</span>
             </div>`).join('') : '<p class="empty-msg">Nenhum hábito.</p>'}
           <h3 class="sub-title" style="margin-top:20px">🎯 Metas em andamento</h3>
           ${metas.length ? metas.map(m=>{

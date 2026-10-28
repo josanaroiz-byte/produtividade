@@ -816,3 +816,9 @@ footer {
   .input-row input, .input-row select, .input-row button { width: 100%; max-width: 100% !important; }
   .hist-grid { grid-template-columns: repeat(2, 1fr); }
 }
+/* ═══ CARTÃO DO DIA (aba Casa) ═══ */
+.dia-card { background: linear-gradient(135deg, #14523a, #2a7a55); color: #fff; border-radius: 14px; padding: 18px 20px; margin-bottom: 8px; box-shadow: 0 4px 16px rgba(20,82,58,0.2); }
+.dia-tarefa-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.12); }
+.dia-tarefa-item:last-of-type { border-bottom: none; }
+.dia-vazia { font-size: 13px; color: rgba(255,255,255,0.75); padding: 6px 0; }
+.dia-card input[type="checkbox"] { accent-color: #8fd3ff; }
